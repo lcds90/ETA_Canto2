@@ -59,7 +59,7 @@
         .btn-pause { background: rgba(20, 80, 220, 0.8); }
         .btn-restart { background: rgba(200, 160, 20, 0.8); color: #000; }
 
-        /* --- CONTAINER DE SELEÇÃO E BOTÕES (ATUALIZADO) --- */
+        /* --- CONTAINER DE SELEÇÃO E BOTÕES --- */
         .list-selector-container { 
             width: 95%; 
             max-width: 600px; 
@@ -82,16 +82,17 @@
             background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255,255,255,0.2);
             color: #fff; border-radius: 25px; padding: 10px; cursor: pointer; font-size: 0.85em;
             font-weight: bold; text-transform: uppercase;
+            outline: none;
         }
         .btn-link-local {
             flex: 1;
             background: rgba(30, 120, 80, 0.6); border: 1px solid rgba(255,255,255,0.3);
             color: #ff4; border-radius: 25px; padding: 10px; cursor: pointer; font-size: 0.85em;
-            font-weight: bold; text-decoration: none; text-align: center; text-transform: uppercase;
-            box-sizing: border-box;
+            font-weight: bold; text-align: center; text-transform: uppercase;
+            box-sizing: border-box; outline: none;
         }
 
-        /* --- BARRA DE BUSCA DIMINUÍDA (ATUALIZADO) --- */
+        /* --- BARRA DE BUSCA DIMINUÍDA --- */
         .search-container { width: 95%; max-width: 480px; margin-bottom: 20px; position: relative; }
         #search-input {
             width: 100%; padding: 12px 45px 12px 20px; border-radius: 25px;
@@ -152,7 +153,7 @@
         
         <div class="selector-buttons-row">
             <button class="btn-reset-order" onclick="resetarOrdemLocal()">Resetar Ordem</button>
-            <a href="Local.html" class="btn-link-local">📂 Mídias Locais</a>
+            <button class="btn-link-local" onclick="irParaMidiasLocais()">📂 Mídias Locais</button>
         </div>
     </div>
 
@@ -169,7 +170,7 @@
 
     <ul id="playlist-sortable"></ul>
 
-<script>
+    <script>
         const BASE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUwdgFWo3-RvINecYfmj0aMZBEKTeGjMkUoJrq-QvwzFTzKRU3XiMCQkDgxsNRtxMha2bTeirKvD8N/pub?output=csv';
         const urlParams = new URLSearchParams(window.location.search);
         let GID_ATUAL = urlParams.get('gid') || '1960210650';
@@ -178,6 +179,11 @@
             const seletor = document.getElementById('sheet-selector');
             if (seletor) seletor.value = GID_ATUAL;
         });
+
+        // NOVA FUNÇÃO: Redireciona para o arquivo local levando o GID selecionado junto
+        function irParaMidiasLocais() {
+            window.location.href = `local.html?gid=${GID_ATUAL}`;
+        }
 
         function safeGetLocal(key) {
             try { return localStorage.getItem(key); } catch(e) { return null; }
@@ -353,7 +359,7 @@
         }
 
         function inlineSplitCSV(linha) {
-            return linha.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+            return inlineSplitCSV = linha.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
         }
 
         function tocar(tipo, media, cantor, musica) {
