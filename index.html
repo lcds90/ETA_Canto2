@@ -81,8 +81,7 @@
             flex: 1;
             background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255,255,255,0.2);
             color: #fff; border-radius: 25px; padding: 10px; cursor: pointer; font-size: 0.85em;
-            font-weight: bold; text-transform: uppercase;
-            outline: none;
+            font-weight: bold; text-transform: uppercase; outline: none;
         }
         .btn-link-local {
             flex: 1;
@@ -180,9 +179,11 @@
             if (seletor) seletor.value = GID_ATUAL;
         });
 
-        // NOVA FUNÇÃO: Redireciona para o arquivo local levando o GID selecionado junto
         function irParaMidiasLocais() {
-            window.location.href = `local.html?gid=${GID_ATUAL}`;
+            // Captura o valor diretamente do seletor para garantir o redirecionamento correto
+            const seletor = document.getElementById('sheet-selector');
+            const gid = seletor ? seletor.value : GID_ATUAL;
+            window.location.href = `local.html?gid=${gid}`;
         }
 
         function safeGetLocal(key) {
@@ -359,7 +360,7 @@
         }
 
         function inlineSplitCSV(linha) {
-            return inlineSplitCSV = linha.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+            return linha.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
         }
 
         function tocar(tipo, media, cantor, musica) {
