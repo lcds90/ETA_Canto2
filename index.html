@@ -91,7 +91,7 @@
             box-sizing: border-box; outline: none;
         }
 
-        /* --- BARRA DE BUSCA DIMINUÍDA --- */
+        /* --- BARRA DE BUSCA --- */
         .search-container { width: 95%; max-width: 480px; margin-bottom: 20px; position: relative; }
         #search-input {
             width: 100%; padding: 12px 45px 12px 20px; border-radius: 25px;
@@ -174,15 +174,15 @@
         const urlParams = new URLSearchParams(window.location.search);
         let GID_ATUAL = urlParams.get('gid') || '1960210650';
 
-        // Tabela de correspondência: GID Online -> GID Local
-        const MAPEAMENTO_GIDS_LOCAIS = {
-            '1960210650': '285250318',   // Domingo
-            '1517164028': '2004923766',  // Segunda
-            '216102701':  '38012532',    // Terça
-            '911593347':  '312508322',   // Quarta
-            '1593190716': '1711319483',  // Quinta
-            '1611821250': '1941499967',  // Sexta
-            '1644722704': '1649718070'   // Sábado
+        // Tabela de conversão: GID Web -> GID Local [cite: 1, 2]
+        const MAP_WEB_PARA_LOCAL = {
+            '1960210650': '285250318',   // Domingo [cite: 1]
+            '1517164028': '2004923766',  // Segunda [cite: 1]
+            '216102701':  '38012532',    // Terça [cite: 1]
+            '911593347':  '312508322',   // Quarta [cite: 1]
+            '1593190716': '1711319483',  // Quinta [cite: 1]
+            '1611821250': '1941499967',  // Sexta [cite: 1]
+            '1644722704': '1649718070'   // Sábado [cite: 2]
         };
 
         window.addEventListener('load', () => {
@@ -192,11 +192,8 @@
 
         function irParaMidiasLocais() {
             const seletor = document.getElementById('sheet-selector');
-            const gidOnline = seletor ? seletor.value : GID_ATUAL;
-            
-            // Procura o GID correspondente da lista local
-            const gidLocal = MAPEAMENTO_GIDS_LOCAIS[gidOnline] || '285250318'; 
-            
+            const gidWeb = seletor ? seletor.value : GID_ATUAL;
+            const gidLocal = MAP_WEB_PARA_LOCAL[gidWeb] || '285250318'; // Padrão: Domingo [cite: 1]
             window.location.href = `local.html?gid=${gidLocal}`;
         }
 
