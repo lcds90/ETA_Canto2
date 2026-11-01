@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - Roberto.</title>
+    <title>Canto ETA - Roberto new </title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
@@ -88,10 +88,41 @@
             flex-direction: column; 
             gap: 8px; 
         }
+        
+        .selector-top-row {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+        }
+
         #sheet-selector {
-            width: 100%; padding: 12px; border-radius: 25px; background: rgba(100, 50, 150, 0.6);
+            flex: 1;
+            padding: 12px; border-radius: 25px; background: rgba(100, 50, 150, 0.6);
             color: #ff4; border: 1px solid rgba(255, 255, 255, 0.3); font-weight: bold; outline: none; box-sizing: border-box;
         }
+
+        .btn-player-novo {
+            background: rgba(255, 215, 0, 0.85); 
+            color: #000; 
+            border: 1px solid rgba(255, 255, 255, 0.4); 
+            border-radius: 25px; 
+            padding: 0 18px; 
+            cursor: pointer; 
+            font-size: 0.85em;
+            font-weight: 800; 
+            text-transform: uppercase; 
+            text-decoration: none;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            box-sizing: border-box; 
+            outline: none;
+            transition: background 0.2s;
+        }
+        .btn-player-novo:hover {
+            background: rgba(255, 215, 0, 1);
+        }
+
         .selector-buttons-row {
             display: flex;
             gap: 8px;
@@ -200,15 +231,19 @@
     </div>
 
     <div class="list-selector-container">
-        <select id="sheet-selector" onchange="mudarLista(this.value)">
-            <option value="1960210650">📅 DOMINGO</option>
-            <option value="1517164028">📅 SEGUNDA-FEIRA</option>
-            <option value="216102701">📅 TERÇA-FEIRA</option>
-            <option value="911593347">📅 QUARTA-FEIRA</option>
-            <option value="1593190716">📅 QUINTA-FEIRA</option>
-            <option value="1611821250">📅 SEXTA-FEIRA</option>
-            <option value="1644722704">📅 SABADO</option>
-        </select>
+        <!-- Linha Superior com o Seletor de Dias e o Botão para o Player Novo -->
+        <div class="selector-top-row">
+            <select id="sheet-selector" onchange="mudarLista(this.value)">
+                <option value="1960210650">📅 DOMINGO</option>
+                <option value="1517164028">📅 SEGUNDA-FEIRA</option>
+                <option value="216102701">📅 TERÇA-FEIRA</option>
+                <option value="911593347">📅 QUARTA-FEIRA</option>
+                <option value="1593190716">📅 QUINTA-FEIRA</option>
+                <option value="1611821250">📅 SEXTA-FEIRA</option>
+                <option value="1644722704">📅 SABADO</option>
+            </select>
+            <a href="ETA_Player.html" class="btn-player-novo">PLAYER NOVO</a>
+        </div>
         
         <div class="selector-buttons-row">
             <button class="btn-reset-order" onclick="resetarOrdemLocal()">Resetar Ordem</button>
@@ -361,12 +396,10 @@
         async function deletarItemPlanilha(elementoLi) {
             const diaSemana = getNomeDiaAtual();
             
-            // Extrai os campos visíveis da linha correspondente
             const part1 = elementoLi.querySelector('.interpreter')?.innerText.trim() || '';
             const part2 = elementoLi.querySelector('.song-title')?.innerText.trim() || '';
             const notesField = elementoLi.querySelector('.notes-field')?.innerText.trim() || '';
 
-            // Reconstrói exatamente no formato gerado pelo formatarStringItem do Apps Script: Música (Cantor) - Observação
             let infoConcatenada = `${part2} (${part1})`;
             if (elementoLi.classList.contains('is-study')) {
                 infoConcatenada = `${part1} (${part2})`;
