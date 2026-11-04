@@ -552,10 +552,15 @@
             const dadosItem = dadosGlobaisPlanilha[idItem] || {};
             const musica = dadosItem.musica || "esta música";
 
-            if (!confirm(`Deseja enviar "${musica}" para o GitHub usando o ID único?`)) return;
+            // Mensagem personalizada de confirmação
+            if (!confirm(`Deseja carregar sua musica "${musica}" para o servidor GitHub?`)) return;
 
             try {
                 elementoLi.style.opacity = "0.5";
+                
+                // Mensagem avisando que foi enviado e que a lista será atualizada
+                alert(`A musica está sendo enviada. sua lista será atualizada em alguns minutos`);
+
                 const query = `acao=enviarItemGithub&dia=${encodeURIComponent(dia)}&id=${encodeURIComponent(idItem)}`;
                 
                 const resposta = await fetch(`${WEB_APP_URL}?${query}`, { method: 'GET' });
@@ -565,7 +570,6 @@
                     throw new Error(textoResposta);
                 }
 
-                alert("Item enviado para o GitHub com sucesso! O link foi atualizado.");
                 elementoLi.style.opacity = "1";
                 carregar(); 
             } catch (error) {
