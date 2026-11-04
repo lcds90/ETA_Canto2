@@ -537,17 +537,14 @@
             }
         }
 
-        // --- FUNÇÃO DE EXCLUSÃO COM PARÂMETROS SEPARADOS DE MÚSICA E CANTOR ---
-async function deletarItemPlanilha(elementoLi) {
+        async function deletarItemPlanilha(elementoLi) {
             const dia = getNomeDiaAtual();
             const idItem = elementoLi.dataset.id;
             const dadosItem = dadosGlobaisPlanilha[idItem] || {};
             
-            // Pega o nome da música e o cantor de forma limpa
             const musica = dadosItem.musica || elementoLi.querySelector('.song-title')?.innerText.trim() || '';
             const cantor = dadosItem.cantor || elementoLi.querySelector('.interpreter')?.innerText.trim() || '';
             
-            // Monta o mesmo formato de string concatenada que a planilha usa: "Música (Intérprete)"
             const nomeConcatenado = `${musica} (${cantor})`;
 
             if (!confirm(`Deseja realmente apagar "${musica}" da planilha?`)) return;
@@ -555,7 +552,6 @@ async function deletarItemPlanilha(elementoLi) {
             try {
                 elementoLi.style.opacity = "0.3";
 
-                // Dispara o pedido GET para o Apps Script apagar a linha correspondente
                 const query = `acao=apagarItem&dia=${encodeURIComponent(dia)}&nome=${encodeURIComponent(nomeConcatenado)}`;
                 
                 const resposta = await fetch(`${WEB_APP_URL}?${query}`, { method: 'GET' });
@@ -574,7 +570,6 @@ async function deletarItemPlanilha(elementoLi) {
                 elementoLi.style.opacity = "1";
             }
         }
-
 
         async function toggleCache(url, btnElement) {
             if (!url) return;
@@ -712,7 +707,13 @@ async function deletarItemPlanilha(elementoLi) {
                     const temMidia = item.media && item.media.length > 5;
                     const ehYouTube = item.media && (item.media.includes('youtube.com') || item.media.includes('youtu.be') || item.media.length === 11);
 
-                    let displayHTML = item.tipo === 'estudo' ? `<span class="interpreter">${item.musica}</span><span class="song-title">${item.cantor}</span>` : `<span class="interpreter">${item.cantor}</span><span class="song-title">${item.musica}</span>`;
+                    let displayHTML = '';
+                    if (item.tipo === 'estudo') {
+                        li.classList.add('is-study');
+                        displayHTML = `<span class="interpreter">${item.musica}</span><span class="song-title">${item.cantor}</span>`;
+                    } else {
+                        displayHTML = `<span class="interpreter">${item.cantor}</span><span class="song-title">${item.musica}</span>`;
+                    }
 
                     let botoesAcao = `
                         <div class="action-buttons">
