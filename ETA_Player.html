@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - Roberto #</title>
+    <title>Canto ETA - Roberto !!</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
@@ -545,11 +545,12 @@
             }
         }
 
-        // --- ENVIAR ITEM ESPECÍFICO PARA O GITHUB USANDO O NÚMERO DA LINHA ---
+        // --- ENVIAR ITEM ESPECÍFICO PARA O GITHUB (COM MENSAGENS PERSONALIZADAS) ---
         async function enviarItemParaGithub(elementoLi) {
             const dia = getNomeDiaAtual();
-            const linhaReal = elementoLi.dataset.row;
-            const musica = elementoLi.dataset.musica || "esta música";
+            const idItem = elementoLi.dataset.id;
+            const dadosItem = dadosGlobaisPlanilha[idItem] || {};
+            const musica = dadosItem.musica || "esta música";
 
             // Mensagem personalizada de confirmação
             if (!confirm(`Deseja carregar sua musica "${musica}" para o servidor GitHub?`)) return;
@@ -560,7 +561,9 @@
                 // Mensagem personalizada informando o envio
                 alert(`A musica está sendo enviada. sua lista será atualizada em alguns minutos`);
 
-                const query = `acao=enviarItemGithub&dia=${encodeURIComponent(dia)}&row=${encodeURIComponent(linhaReal)}`;
+                const cantor = dadosItem.cantor || "";
+                const nomeConcatenado = `${musica} (${cantor})`;
+                const query = `acao=enviarItemGithub&dia=${encodeURIComponent(dia)}&nome=${encodeURIComponent(nomeConcatenado)}`;
                 
                 const resposta = await fetch(`${WEB_APP_URL}?${query}`, { method: 'GET' });
                 const textoResposta = await resposta.text();
@@ -701,19 +704,15 @@
             if (!lista) return;
             const linhas = texto.split('\n').map(l => l.trim()).filter(l => l);
             let dadosMap = {};
-            
             linhas.slice(1).forEach((linha, index) => {
                 const cols = inlineSplitCSV(linha);
-                const linhaReal = index + 2; // Número exato da linha correspondente na planilha do Google Sheets
                 const id = cols[0]?.replace(/"/g, '') || ('item-'+index);
-                
                 dadosMap[id] = {
                     id: id, cantor: cols[1]?.replace(/"/g, '') || '',
                     musica: cols[2]?.replace(/"/g, '') || '',
                     media: cols[3]?.replace(/"/g, '').trim() || '',
                     tipo: (cols[4]?.replace(/"/g, '') || '').toLowerCase().trim(),
-                    notes: cols[5]?.replace(/"/g, '') || '',
-                    linhaReal: linhaReal
+                    notes: cols[5]?.replace(/"/g, '') || ''
                 };
             });
             dadosGlobaisPlanilha = dadosMap;
@@ -737,8 +736,6 @@
                 const li = document.createElement('li');
                 li.className = 'glass-panel';
                 li.dataset.id = item.id;
-                li.dataset.row = item.linhaReal; // Atribui a linha real ao elemento HTML
-                li.dataset.musica = item.musica;
                 
                 const urlFinal = normalizarUrlMidia(item.media);
                 li.dataset.media = urlFinal;
@@ -764,7 +761,7 @@
 
                     let botoesAcao = `
                         <div class="action-buttons">
-                            ${temMidia && !ehYouTube && !ehGitHub ? `<button class="btn-github-upload" onclick="enviarItemParaGithub(this.closest('li'))" title="Enviar para o GitHub (por Linha)">☁️</button>` : ''}
+                            ${temMidia && !ehYouTube && !ehGitHub ? `<button class="btn-github-upload" onclick="enviarItemParaGithub(this.closest('li'))" title="Enviar para o GitHub">☁️</button>` : ''}
                             ${temMidia && !ehYouTube ? `<button class="btn-cache" data-url="${urlFinal}" onclick="toggleCache('${urlFinal}', this)">⬇️</button>` : ''}
                             ${temMidia ? `<button class="btn-play" onclick="tocar('${item.tipo}', '${item.media.replace(/'/g, "\\'")}', '${item.cantor.replace(/'/g, "\\'")}', '${item.musica.replace(/'/g, "\\'")}', this.closest('li'))">▶</button>` : ''}
                             <button class="btn-delete-sheet" onclick="deletarItemPlanilha(this.closest('li'))" title="Excluir">🗑️</button>
