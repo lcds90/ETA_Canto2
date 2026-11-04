@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - Roberto ++</title>
+    <title>Canto ETA - Roberto !!</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
@@ -545,22 +545,18 @@
             }
         }
 
-        // --- FUNÇÃO PARA ENVIAR UM ITEM ESPECÍFICO PARA O GITHUB ---
+        // --- ENVIAR ITEM ESPECÍFICO PARA O GITHUB USANDO O UID ---
         async function enviarItemParaGithub(elementoLi) {
             const dia = getNomeDiaAtual();
             const idItem = elementoLi.dataset.id;
             const dadosItem = dadosGlobaisPlanilha[idItem] || {};
-            
-            const musica = dadosItem.musica || elementoLi.querySelector('.song-title')?.innerText.trim() || '';
-            const cantor = dadosItem.cantor || elementoLi.querySelector('.interpreter')?.innerText.trim() || '';
-            
-            const nomeConcatenado = `${musica} (${cantor})`;
+            const musica = dadosItem.musica || "esta música";
 
-            if (!confirm(`Deseja enviar "${musica}" para o GitHub? Isso permitirá alterar o tom e evitar problemas de CORS.`)) return;
+            if (!confirm(`Deseja enviar "${musica}" para o GitHub usando o ID único?`)) return;
 
             try {
                 elementoLi.style.opacity = "0.5";
-                const query = `acao=enviarItemGithub&dia=${encodeURIComponent(dia)}&nome=${encodeURIComponent(nomeConcatenado)}`;
+                const query = `acao=enviarItemGithub&dia=${encodeURIComponent(dia)}&id=${encodeURIComponent(idItem)}`;
                 
                 const resposta = await fetch(`${WEB_APP_URL}?${query}`, { method: 'GET' });
                 const textoResposta = await resposta.text();
@@ -569,9 +565,9 @@
                     throw new Error(textoResposta);
                 }
 
-                alert("Item enviado para o GitHub com sucesso! O link na planilha foi atualizado.");
+                alert("Item enviado para o GitHub com sucesso! O link foi atualizado.");
                 elementoLi.style.opacity = "1";
-                carregar(); // Recarrega a lista atualizada
+                carregar(); 
             } catch (error) {
                 console.error("Erro ao enviar para o GitHub:", error);
                 alert("Erro ao comunicar com o servidor: " + error.message);
@@ -759,7 +755,7 @@
 
                     let botoesAcao = `
                         <div class="action-buttons">
-                            ${temMidia && !ehYouTube && !ehGitHub ? `<button class="btn-github-upload" onclick="enviarItemParaGithub(this.closest('li'))" title="Enviar para o GitHub (para usar transposição de tom)">☁️</button>` : ''}
+                            ${temMidia && !ehYouTube && !ehGitHub ? `<button class="btn-github-upload" onclick="enviarItemParaGithub(this.closest('li'))" title="Enviar para o GitHub (com UID)">☁️</button>` : ''}
                             ${temMidia && !ehYouTube ? `<button class="btn-cache" data-url="${urlFinal}" onclick="toggleCache('${urlFinal}', this)">⬇️</button>` : ''}
                             ${temMidia ? `<button class="btn-play" onclick="tocar('${item.tipo}', '${item.media.replace(/'/g, "\\'")}', '${item.cantor.replace(/'/g, "\\'")}', '${item.musica.replace(/'/g, "\\'")}', this.closest('li'))">▶</button>` : ''}
                             <button class="btn-delete-sheet" onclick="deletarItemPlanilha(this.closest('li'))" title="Excluir">🗑️</button>
