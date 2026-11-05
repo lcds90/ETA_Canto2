@@ -149,36 +149,38 @@
         .separator-content { display: grid; grid-template-columns: 35px 1fr; align-items: center; }
         .separator-title { font-size: 1.2em; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; text-align: center; width: 100%; color: #ff4; }
 
-        .li-main-row { display: grid; grid-template-columns: 35px 35px 1fr auto; align-items: center; gap: 10px; }
-        .drag-handle { cursor: grab; color: rgba(255,255,255,0.4); font-size: 22px; touch-action: none; padding: 10px; }
-        .song-info { display: flex; flex-direction: column; overflow: hidden; }
-        .interpreter { color: #ff4; font-weight: bold; font-size: 1.03em; text-transform: uppercase; }
-        .song-title { font-size: 1.01em; color: #fff; }
+        /* Ajustado para otimizar espaço no celular com os 3 botões */
+        .li-main-row { display: flex; align-items: center; gap: 8px; width: 100%; }
+        .drag-handle { cursor: grab; color: rgba(255,255,255,0.4); font-size: 20px; touch-action: none; padding: 5px; flex-shrink: 0; }
+        .chk-done { flex-shrink: 0; width: 20px; height: 20px; cursor: pointer; }
+        .song-info { display: flex; flex-direction: column; flex: 1; min-width: 0; overflow: hidden; }
+        .interpreter { color: #ff4; font-weight: bold; font-size: 0.98em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .song-title { font-size: 0.95em; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .action-buttons { display: flex; gap: 8px; }
+        .action-buttons { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
         .btn-play {
             background: rgba(255, 255, 255, 0.1); color: #ff4; border: none;
-            border-radius: 50%; width: 48px; height: 48px; cursor: pointer; font-size: 1.3em;
-            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; width: 42px; height: 42px; cursor: pointer; font-size: 1.1em;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
         .btn-cache {
             background: rgba(255, 255, 255, 0.1); color: #fff; border: none;
-            border-radius: 50%; width: 48px; height: 48px; cursor: pointer; font-size: 1.1em;
-            display: flex; align-items: center; justify-content: center; transition: 0.3s background;
+            border-radius: 50%; width: 42px; height: 42px; cursor: pointer; font-size: 1em;
+            display: flex; align-items: center; justify-content: center; transition: 0.3s background; flex-shrink: 0;
         }
         .btn-cache.cached { background: rgba(30, 180, 80, 0.6); color: #fff; }
         
         .btn-github-upload {
             background: rgba(0, 150, 255, 0.6); color: #fff; border: none;
-            border-radius: 50%; width: 48px; height: 48px; cursor: pointer; font-size: 1.1em;
-            display: flex; align-items: center; justify-content: center; transition: 0.3s background;
+            border-radius: 50%; width: 42px; height: 42px; cursor: pointer; font-size: 1em;
+            display: flex; align-items: center; justify-content: center; transition: 0.3s background; flex-shrink: 0;
         }
         .btn-github-upload:hover { background: rgba(0, 150, 255, 0.9); }
 
         .btn-delete-sheet {
             background: rgba(220, 20, 20, 0.9); color: #fff; border: none;
-            border-radius: 50%; width: 48px; height: 48px; cursor: pointer;
-            display: none; align-items: center; justify-content: center; font-size: 1.2em;
+            border-radius: 50%; width: 42px; height: 42px; cursor: pointer;
+            display: none; align-items: center; justify-content: center; font-size: 1.1em; flex-shrink: 0;
         }
         
         body.modo-gerenciamento .btn-play, body.modo-gerenciamento .btn-cache, body.modo-gerenciamento .btn-github-upload { display: none !important; }
@@ -196,27 +198,30 @@
         <button class="toggle-player" id="btn-toggle" onclick="togglePlayer()">▼</button>
         <div id="now-playing">Selecione uma faixa</div>
         
-        <div class="master-controls-row">
-            <button class="btn-master-action" onclick="restartMedia()">↺ Início</button>
-            <button class="btn-master-action" id="btn-main-play" onclick="togglePlayPauseMaster()">▶ Play</button>
-            <button class="btn-master-action" onclick="stopAll()" style="color: #ff6b6b;">■ Stop</button>
-        </div>
-
-        <div id="progress-panel" class="progress-container">
-            <input type="range" id="seek-bar" class="seek-slider" min="0" max="100" value="0" oninput="seekingAudio(this.value)">
-            <div class="time-display">
-                <span id="time-current">00:00</span>
-                <span id="time-total">00:00</span>
+        <!-- Controles Master (ocultados automaticamente no YouTube) -->
+        <div id="audio-controls-group">
+            <div class="master-controls-row">
+                <button class="btn-master-action" onclick="restartMedia()">↺ Início</button>
+                <button class="btn-master-action" id="btn-main-play" onclick="togglePlayPauseMaster()">▶ Play</button>
+                <button class="btn-master-action" onclick="stopAll()" style="color: #ff6b6b;">■ Stop</button>
             </div>
-        </div>
 
-        <div id="pitch-control-panel" class="pitch-control-box">
-            <span class="pitch-label" id="pitch-key-label">🎵 Tom: --</span>
-            <div class="pitch-buttons-group">
-                <button class="btn-pitch" onclick="alterarPitch(-1)">-</button>
-                <span id="pitch-val-display">0 st</span>
-                <button class="btn-pitch" onclick="alterarPitch(1)">+</button>
-                <button class="btn-pitch" style="font-size: 0.75em; padding: 5px 6px;" onclick="resetarPitch()" title="Resetar Tom">Reset</button>
+            <div id="progress-panel" class="progress-container">
+                <input type="range" id="seek-bar" class="seek-slider" min="0" max="100" value="0" oninput="seekingAudio(this.value)">
+                <div class="time-display">
+                    <span id="time-current">00:00</span>
+                    <span id="time-total">00:00</span>
+                </div>
+            </div>
+
+            <div id="pitch-control-panel" class="pitch-control-box">
+                <span class="pitch-label" id="pitch-key-label">🎵 Tom: --</span>
+                <div class="pitch-buttons-group">
+                    <button class="btn-pitch" onclick="alterarPitch(-1)">-</button>
+                    <span id="pitch-val-display">0 st</span>
+                    <button class="btn-pitch" onclick="alterarPitch(1)">+</button>
+                    <button class="btn-pitch" style="font-size: 0.75em; padding: 5px 6px;" onclick="resetarPitch()" title="Resetar Tom">Reset</button>
+                </div>
             </div>
         </div>
 
@@ -419,10 +424,8 @@
             const floatCtrl = document.getElementById('float-ctrl');
             if (floatCtrl) floatCtrl.style.display = 'none';
             
-            const pitchPanel = document.getElementById('pitch-control-panel');
-            const progressPanel = document.getElementById('progress-panel');
-            if (pitchPanel) pitchPanel.style.display = 'flex';
-            if (progressPanel) progressPanel.style.display = 'flex';
+            const audioControlsGroup = document.getElementById('audio-controls-group');
+            if (audioControlsGroup) audioControlsGroup.style.display = 'block';
 
             if (yt) { yt.src = ""; yt.style.display = 'none'; }
             pararTonePlayer();
@@ -545,20 +548,17 @@
             }
         }
 
-        // --- ENVIAR ITEM ESPECÍFICO PARA O GITHUB (COM MENSAGENS PERSONALIZADAS) ---
+        // --- ENVIAR ITEM ESPECÍFICO PARA O GITHUB (COM ÍCONE DE PARTITURA 🎼) ---
         async function enviarItemParaGithub(elementoLi) {
             const dia = getNomeDiaAtual();
             const idItem = elementoLi.dataset.id;
             const dadosItem = dadosGlobaisPlanilha[idItem] || {};
             const musica = dadosItem.musica || "esta música";
 
-            // Mensagem personalizada de confirmação
             if (!confirm(`Deseja carregar sua musica "${musica}" para o servidor GitHub?`)) return;
 
             try {
                 elementoLi.style.opacity = "0.5";
-                
-                // Mensagem personalizada informando o envio
                 alert(`A musica está sendo enviada. sua lista será atualizada em alguns minutos`);
 
                 const cantor = dadosItem.cantor || "";
@@ -761,7 +761,7 @@
 
                     let botoesAcao = `
                         <div class="action-buttons">
-                            ${temMidia && !ehYouTube && !ehGitHub ? `<button class="btn-github-upload" onclick="enviarItemParaGithub(this.closest('li'))" title="Enviar para o GitHub">☁️</button>` : ''}
+                            ${temMidia && !ehYouTube && !ehGitHub ? `<button class="btn-github-upload" onclick="enviarItemParaGithub(this.closest('li'))" title="Enviar para o GitHub (Partitura)">🎼</button>` : ''}
                             ${temMidia && !ehYouTube ? `<button class="btn-cache" data-url="${urlFinal}" onclick="toggleCache('${urlFinal}', this)">⬇️</button>` : ''}
                             ${temMidia ? `<button class="btn-play" onclick="tocar('${item.tipo}', '${item.media.replace(/'/g, "\\'")}', '${item.cantor.replace(/'/g, "\\'")}', '${item.musica.replace(/'/g, "\\'")}', this.closest('li'))">▶</button>` : ''}
                             <button class="btn-delete-sheet" onclick="deletarItemPlanilha(this.closest('li'))" title="Excluir">🗑️</button>
@@ -789,8 +789,7 @@
 
         async function tocar(tipo, media, cantor, musica, elementoLi) {
             const yt = document.getElementById('yt-player');
-            const pitchPanel = document.getElementById('pitch-control-panel');
-            const progressPanel = document.getElementById('progress-panel');
+            const audioControlsGroup = document.getElementById('audio-controls-group');
             
             const playerContainer = document.getElementById('main-player-container');
             if (playerContainer) playerContainer.classList.remove('player-minimized');
@@ -815,8 +814,8 @@
             const ehYouTube = media.includes('youtube.com') || media.includes('youtu.be') || (media.length === 11 && !media.includes('http'));
             
             if (ehYouTube) {
-                if (pitchPanel) pitchPanel.style.display = 'none';
-                if (progressPanel) progressPanel.style.display = 'none';
+                // Esconde os controles de áudio nativo / Tone.js quando for YouTube
+                if (audioControlsGroup) audioControlsGroup.style.display = 'none';
                 if (yt) {
                     yt.style.display = 'block';
                     let id = media.includes('v=') ? media.split('v=')[1].split('&')[0] : (media.includes('be/') ? media.split('be/')[1] : media);
@@ -824,8 +823,8 @@
                 }
                 if (nowPlaying) nowPlaying.innerHTML = `Tocando: <b>${musica}</b><br><small>${cantor}</small>`;
             } else {
-                if (pitchPanel) pitchPanel.style.display = 'flex';
-                if (progressPanel) progressPanel.style.display = 'flex';
+                // Mostra os controles de áudio nativo / Tone.js para arquivos de áudio
+                if (audioControlsGroup) audioControlsGroup.style.display = 'block';
                 
                 let url = normalizarUrlMidia(media);
                 const ehDropbox = url.includes('dropbox.com');
