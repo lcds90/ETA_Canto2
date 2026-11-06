@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - Roberto !!</title>
+    <title>Canto ETA - Roberto !   !</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
@@ -91,7 +91,6 @@
         .btn-pitch:active { background: rgba(255, 255, 255, 0.3); }
         #pitch-val-display { font-family: monospace; font-size: 0.9em; font-weight: bold; color: #00bcd4; min-width: 35px; text-align: center; }
 
-        /* Painel Dropdown do Pedal M-Vave Chocolate Plus */
         .midi-config-panel {
             margin-top: 10px; background: rgba(20, 20, 35, 0.9);
             border: 1px solid rgba(0, 188, 212, 0.4); border-radius: 10px;
@@ -328,7 +327,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         let GID_ATUAL = urlParams.get('gid') || '1960210650';
         
-        const CACHE_NAME = 'canto-eta-media-v29';
+        const CACHE_NAME = 'canto-eta-media-v30';
         let modoGerenciamentoAtivo = false;
         let currentSemitones = 0;
         let tomOriginalExtraido = null;
@@ -510,10 +509,15 @@
 
             if (yt) { yt.src = ""; yt.style.display = 'none'; }
             pararTonePlayer();
+            
             currentSemitones = 0;
             tomOriginalExtraido = null;
             startOffset = 0;
+            masterDuration = 0;
             itemIdAtualCarregado = null;
+            isMultiplayerActive = false;
+            stemsData = [];
+            
             atualizarDisplayPitch();
             
             const mainContainer = document.getElementById('main-player-container');
@@ -524,6 +528,13 @@
             
             const nowPlaying = document.getElementById('now-playing');
             if (nowPlaying) nowPlaying.innerText = "Selecione uma faixa";
+            
+            const seekBar = document.getElementById('seek-bar');
+            const timeCurrent = document.getElementById('time-current');
+            const timeTotal = document.getElementById('time-total');
+            if (seekBar) seekBar.value = 0;
+            if (timeCurrent) timeCurrent.innerText = "00:00";
+            if (timeTotal) timeTotal.innerText = "00:00";
             
             atualizarBotoesPlayMaster("▶ Play");
         }
@@ -598,8 +609,13 @@
         }
 
         function restartMedia() {
+            startOffset = 0;
+            const seekBar = document.getElementById('seek-bar');
+            const timeCurrent = document.getElementById('time-current');
+            if (seekBar) seekBar.value = 0;
+            if (timeCurrent) timeCurrent.innerText = "00:00";
+
             if (isMultiplayerActive) {
-                startOffset = 0;
                 playMultiplayer();
                 return;
             }
@@ -615,9 +631,12 @@
             }
             if (!audioElementNativo) return;
             audioElementNativo.currentTime = 0;
-            audioElementNativo.play();
-            atualizarBotoesPlayMaster("⏸ Pausar");
-            iniciarMonitoramentoProgressoNativo();
+            audioElementNativo.play().then(() => {
+                atualizarBotoesPlayMaster("⏸ Pausar");
+                iniciarMonitoramentoProgressoNativo();
+            }).catch(e => {
+                console.error("Erro ao reiniciar:", e);
+            });
         }
 
         function seekingAudio(valPorcentagem) {
@@ -835,7 +854,8 @@
                 const id = cols[1]?.replace(/"/g, '') || ('item-'+index);
                 
                 let extraTracks = [];
-                // Coluna H (índice 7) -> Trk1 (Loop)
+                // CORREÇÃO ORDEM STEMS:
+                // Coluna H (índice 7) -> Trk1 (Loop Contínuo)
                 if (cols[7] && cols[7].replace(/"/g, '').trim().startsWith('http')) {
                     extraTracks.push({ name: 'Trk1 (Loop)', url: cols[7].replace(/"/g, '').trim(), type: 'trk1' });
                 }
@@ -843,18 +863,18 @@
                 if (cols[8] && cols[8].replace(/"/g, '').trim().startsWith('http')) {
                     extraTracks.push({ name: 'Trk2 (Fill)', url: cols[8].replace(/"/g, '').trim(), type: 'trk2' });
                 }
-                // Coluna J (índice 9) -> Trk3 (Fim)
+                // Coluna J (índice 9) -> Trk3 (Fim / Stop Inteligente)
                 if (cols[9] && cols[9].replace(/"/g, '').trim().startsWith('http')) {
                     extraTracks.push({ name: 'Trk3 (Fim)', url: cols[9].replace(/"/g, '').trim(), type: 'trk3' });
                 }
 
                 dadosMap[id] = {
                     id: id, 
-                    cantor: cols[1]?.replace(/"/g, '') || '', // Coluna B: Turma/Aluno
-                    musica: cols[2]?.replace(/"/g, '') || '', // Coluna C: Aluno/Intérprete
-                    media: cols[3]?.replace(/"/g, '').trim() || '', // Coluna D: Música
-                    tipo: (cols[4]?.replace(/"/g, '') || '').toLowerCase().trim(), // Coluna E: Link
-                    notes: cols[5]?.replace(/"/g, '') || '', // Coluna F: Tipo/Notas
+                    cantor: cols[1]?.replace(/"/g, '') || '',
+                    musica: cols[2]?.replace(/"/g, '') || '',
+                    media: cols[3]?.replace(/"/g, '').trim() || '',
+                    tipo: (cols[4]?.replace(/"/g, '') || '').toLowerCase().trim(),
+                    notes: cols[5]?.replace(/"/g, '') || '',
                     stems: extraTracks
                 };
             });
@@ -965,6 +985,12 @@
             currentSemitones = 0;
             startOffset = 0;
             atualizarDisplayPitch();
+
+            // CORREÇÃO PONTEIRO EM 0:0 AO ABRIR O ITEM
+            const seekBar = document.getElementById('seek-bar');
+            const timeCurrent = document.getElementById('time-current');
+            if (seekBar) seekBar.value = 0;
+            if (timeCurrent) timeCurrent.innerText = "00:00";
             
             let parsedStems = [];
             try { parsedStems = JSON.parse(decodeURIComponent(stemsEncoded)); } catch(e){}
@@ -975,7 +1001,6 @@
             
             if (ehYouTube) {
                 isMultiplayerActive = false;
-                // CORREÇÃO: Esconde controles de áudio nativo/pitch quando for YouTube
                 if (audioControlsGroup) audioControlsGroup.style.display = 'none';
                 if (loopPedalsRow) loopPedalsRow.style.display = 'none';
                 if (pitchPanel) pitchPanel.style.display = 'none';
@@ -1011,12 +1036,6 @@
 
                     nowPlaying.innerHTML = `Pronto: <b>${musica}</b><br><small>${cantor}</small>`;
                     atualizarBotoesPlayMaster("▶ Play");
-                    
-                    // CORREÇÃO: Apenas posiciona no início sem forçar autoplay (evita bloqueio)
-                    const seekBar = document.getElementById('seek-bar');
-                    const timeCurrent = document.getElementById('time-current');
-                    if (seekBar) seekBar.value = 0;
-                    if (timeCurrent) timeCurrent.innerText = "00:00";
                 } catch(e) {
                     console.error("Erro Tone.js:", e);
                     alert("Erro ao carregar o player de áudio.");
@@ -1040,11 +1059,9 @@
 
                 nowPlaying.innerHTML = `Pronto: <b>${musica}</b><br><small>${cantor}</small>`;
                 atualizarBotoesPlayMaster("▶ Play");
-                
-                // CORREÇÃO: Apenas carrega e aponta para o início (currentTime = 0), sem disparar play()
                 audioElementNativo.currentTime = 0;
             } else {
-                // Modo Loop / Multiplayer (Colunas H, I, J)
+                // Modo Loop / Multiplayer
                 try {
                     const ctx = getAudioContext();
                     stemsData = [];
@@ -1064,6 +1081,9 @@
                         if (audioControlsGroup) audioControlsGroup.style.display = 'none';
                         if (loopPedalsRow) loopPedalsRow.style.display = 'block';
                         if (pitchPanel) pitchPanel.style.display = 'none';
+
+                        const timeTotal = document.getElementById('time-total');
+                        if (timeTotal) timeTotal.innerText = formatarTempo(masterDuration);
 
                         nowPlaying.innerHTML = `Pronto (Loop): <b>${musica}</b><br><small>${cantor}</small>`;
                         atualizarBotoesPlayMaster("▶ Loop");
@@ -1093,7 +1113,7 @@
             startTime = ctx.currentTime - startOffset;
 
             stemsData.forEach(stem => {
-                // CORREÇÃO: Garante que apenas o trk1 (Loop) toque em loop contínuo
+                // CORREÇÃO LOOP: Garante que apenas o trk1 (Loop) toque continuamente
                 if (stem.type === 'trk2' || stem.type === 'trk3') return;
                 if (stem.sourceNode) { try { stem.sourceNode.stop(); } catch(e){} }
                 
@@ -1156,7 +1176,7 @@
             stemTrk2.sourceNode = source;
         }
 
-        // --- BOTÃO / PEDAL D: STOP INTELIGENTE / TRK3 (Coluna J) OU STOP GERAL ---
+        // --- BOTÃO / PEDAL D: STOP INTELIGENTE / TRK3 (Coluna J) ---
         function dispararStopInteligente() {
             if (!isPlaying && !audioElementNativo && !tonePlayerNode) {
                 stopAll();
