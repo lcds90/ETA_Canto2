@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - Roberto !!</title>
+    <title>Canto ETA - Roberto !🎸🥁🎤!</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
@@ -222,7 +222,7 @@
         <button class="toggle-player" id="btn-toggle" onclick="togglePlayer()">▼</button>
         <div id="now-playing">Selecione uma faixa</div>
         
-        <!-- Controles Master -->
+        <!-- Controles Master para Player Padrão -->
         <div id="audio-controls-group">
             <div class="master-controls-row">
                 <button class="btn-master-action" onclick="restartMedia()">↺ Início</button>
@@ -247,16 +247,21 @@
                     <button class="btn-pitch" style="font-size: 0.75em; padding: 5px 6px;" onclick="resetarPitch()" title="Resetar Tom">Reset</button>
                 </div>
             </div>
+        </div>
 
-            <div id="multiplayerStemsBox" class="multiplayer-stems-box">
-                <div style="font-size: 0.8rem; color: #00bcd4; font-weight: bold; text-align: left;">🎛️ MULTIPLAYER (CANAIS):</div>
-                <div id="stemsListContainer"></div>
-                
-                <div class="triggers-row" id="triggersButtonsRow" style="display: none;">
-                    <button id="btnTriggerFill" class="btn-trigger btn-fill" onclick="dispararFillTrk2()">🪘 Virada / Fill (Trk2)</button>
-                    <button id="btnTriggerEnding" class="btn-trigger btn-ending" onclick="dispararEndingTrk3()">🏁 Finalização (Trk3)</button>
-                </div>
+        <!-- Layout Alternativo Exclusivo para Músicas com Apenas Loops (Sem Coluna E) -->
+        <div id="loopOnlyControlsGroup" style="display: none; margin-top: 10px; flex-direction: column; gap: 8px;">
+            <div style="font-size: 0.8rem; color: #ff4; font-weight: bold;">🎹 CONTROLE DE LOOPS & STEMS</div>
+            <div class="master-controls-row">
+                <button class="btn-master-action" id="btn-loop-play" onclick="togglePlayPauseMaster()" style="background: #4caf50; flex: 1;">▶ Play Loop (Trk1)</button>
+                <button class="btn-master-action" onclick="dispararFillTrk2()" style="background: #e91e63; flex: 1;">🪘 Virada (Trk2)</button>
+                <button class="btn-master-action" onclick="stopAll()" style="background: #f44336; flex: 1;">■ Stop / Fim</button>
             </div>
+        </div>
+
+        <div id="multiplayerStemsBox" class="multiplayer-stems-box" style="display: none;">
+            <div style="font-size: 0.8rem; color: #00bcd4; font-weight: bold; text-align: left;">🎛️ CANAIS EXTRAS:</div>
+            <div id="stemsListContainer"></div>
         </div>
 
         <iframe id="yt-player" allow="autoplay"></iframe>
@@ -304,7 +309,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         let GID_ATUAL = urlParams.get('gid') || '1960210650';
         
-        const CACHE_NAME = 'canto-eta-media-v12';
+        const CACHE_NAME = 'canto-eta-media-v13';
         let modoGerenciamentoAtivo = false;
         let currentSemitones = 0;
         let tomOriginalExtraido = null;
@@ -327,14 +332,6 @@
         let tonePitchShift = null;
         let tonePlayerNode = null;
         let progressInterval = null;
-
-        const NOTAS_CROMATICAS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-        const NOTAS_FLAT_MAP = { "Db":"C#", "Eb":"D#", "Gb":"F#", "Ab":"G#", "Bb":"A#" };
-        
-        const MAPA_EXTENSO = {
-            'do': 'C', 'dó': 'C', 're': 'D', 'ré': 'D', 'mi': 'E',
-            'fa': 'F', 'fá': 'F', 'sol': 'G', 'la': 'A', 'lá': 'A', 'si': 'B'
-        };
 
         const MAPA_NOMES_DIAS = {
             '1960210650': 'DOMINGO', '1517164028': 'SEGUNDA', '216102701': 'TERÇA',
@@ -406,14 +403,6 @@
                     stem.sourceNode = null;
                 }
             });
-            if (tonePitchShift) {
-                try { tonePitchShift.dispose(); } catch(e){}
-                tonePitchShift = null;
-            }
-            if (tonePlayerNode) {
-                try { tonePlayerNode.disconnect(); } catch(e){}
-                tonePlayerNode = null;
-            }
             if (progressInterval) {
                 clearInterval(progressInterval);
                 progressInterval = null;
@@ -424,12 +413,13 @@
         function stopAll() {
             const yt = document.getElementById('yt-player');
             const audioControlsGroup = document.getElementById('audio-controls-group');
+            const loopOnlyControlsGroup = document.getElementById('loopOnlyControlsGroup');
+            
             if (audioControlsGroup) audioControlsGroup.style.display = 'block';
+            if (loopOnlyControlsGroup) loopOnlyControlsGroup.style.display = 'none';
 
             if (yt) { yt.src = ""; yt.style.display = 'none'; }
             pararTonePlayer();
-            currentSemitones = 0;
-            tomOriginalExtraido = null;
             startOffset = 0;
             
             const mainContainer = document.getElementById('main-player-container');
@@ -446,8 +436,11 @@
 
         function atualizarBotoesPlayMaster(texto) {
             const btnMain = document.getElementById('btn-main-play');
+            const btnLoop = document.getElementById('btn-loop-play');
             const btnFloat = document.getElementById('btn-pause-float');
+            
             if (btnMain) btnMain.innerText = texto;
+            if (btnLoop) btnLoop.innerText = texto === "⏸ Pausar" ? "⏸ Pausar Loop" : "▶ Play Loop (Trk1)";
             if (btnFloat) btnFloat.innerText = texto === "⏸ Pausar" ? "⏸ Pausar" : "▶ Play";
         }
 
@@ -504,23 +497,6 @@
             audioElementNativo.currentTime = novoTempo;
             const timeCurrent = document.getElementById('time-current');
             if (timeCurrent) timeCurrent.innerText = formatarTempo(novoTempo);
-        }
-
-        function alterarPitch(delta) {
-            const novoValor = currentSemitones + delta;
-            if (novoValor >= -3 && novoValor <= 3) {
-                currentSemitones = novoValor;
-                atualizarDisplayPitch();
-                if (tonePitchShift) tonePitchShift.pitch = currentSemitones;
-            }
-        }
-
-        function resetarPitch() {
-            if (currentSemitones !== 0) {
-                currentSemitones = 0;
-                atualizarDisplayPitch();
-                if (tonePitchShift) tonePitchShift.pitch = 0;
-            }
         }
 
         function mudarLista(novoGid) { GID_ATUAL = novoGid; carregar(); }
@@ -659,38 +635,6 @@
             }
         }
 
-        async function baixarMidiasDoDia() {
-            const botoes = document.querySelectorAll('#playlist-sortable .btn-cache:not(.cached)');
-            if (botoes.length === 0) return alert("Todas as mídias já estão baixadas!");
-            if (confirm(`Deseja baixar todas as ${botoes.length} mídias do dia?`)) {
-                const cache = await caches.open(CACHE_NAME);
-                for (let btn of botoes) {
-                    const url = btn.dataset.url;
-                    if (!url) continue;
-                    btn.innerText = '⏳';
-                    try {
-                        const res = await fetch(url);
-                        if (res.ok) { await cache.put(url, res); btn.innerText = '🗑️'; btn.classList.add('cached'); }
-                        else { btn.innerText = '⬇️'; }
-                    } catch(e) { btn.innerText = '⬇️'; }
-                }
-                alert("Downloads concluídos!");
-            }
-        }
-
-        async function limparMidiasDoDia() {
-            const botoes = document.querySelectorAll('#playlist-sortable .btn-cache.cached');
-            if (botoes.length === 0) return alert("Não há mídias salvas em memória.");
-            if (confirm("Deseja apagar as mídias da memória local?")) {
-                const cache = await caches.open(CACHE_NAME);
-                for (let btn of botoes) {
-                    await cache.delete(btn.dataset.url);
-                    btn.innerText = '⬇️'; btn.classList.remove('cached');
-                }
-                alert("Removido com sucesso!");
-            }
-        }
-
         async function carregar() {
             const lista = document.getElementById('playlist-sortable');
             if (lista) lista.innerHTML = '<p style="text-align:center;">Carregando...</p>';
@@ -718,6 +662,7 @@
                 const id = cols[0]?.replace(/"/g, '') || ('item-'+index);
                 
                 let extraTracks = [];
+                // Coluna H (índice 7 = trk1), Coluna I (índice 8 = trk2), Coluna J (índice 9 = trk3)
                 if (cols[7] && cols[7].replace(/"/g, '').trim().startsWith('http')) {
                     extraTracks.push({ name: 'Trk1 (Loop)', url: cols[7].replace(/"/g, '').trim(), type: 'trk1' });
                 }
@@ -759,11 +704,12 @@
                 li.className = 'glass-panel';
                 li.dataset.id = item.id;
                 
-                // --- CORREÇÃO: Verifica coluna E OU se há stems nas colunas H, I, J ---
+                // Valida se existe mídia principal (E) OU links nas colunas H, I, J
                 const temMediaPrincipal = item.media && item.media.length > 5;
                 const temStems = item.stems && item.stems.length > 0;
-                const primeiraMidiaValida = temMediaPrincipal ? item.media : (temStems ? item.stems[0].url : '');
+                const temMidiaValida = temMediaPrincipal || temStems;
                 
+                const primeiraMidiaValida = temMediaPrincipal ? item.media : (temStems ? item.stems[0].url : '');
                 const urlFinal = normalizarUrlMidia(primeiraMidiaValida);
                 li.dataset.media = urlFinal;
 
@@ -775,7 +721,6 @@
                     if(salvoInfo.done) li.classList.add('done');
                     const notaFinal = (salvoInfo.notas && salvoInfo.notas.trim() !== "") ? salvoInfo.notas : item.notes;
                     
-                    const temMidiaValida = temMediaPrincipal || temStems;
                     const ehYouTube = temMediaPrincipal && (item.media.includes('youtube.com') || item.media.includes('youtu.be') || item.media.length === 11);
                     const ehGitHub = temMediaPrincipal && (item.media.includes('github.io') || item.media.includes('github.com'));
 
@@ -789,7 +734,7 @@
 
                     let botoesAcao = `
                         <div class="action-buttons">
-                            ${temMidiaValida && !ehYouTube && !ehGitHub ? `<button class="btn-github-upload" onclick="enviarItemParaGithub(this.closest('li'))" title="Enviar para o GitHub (Partitura)">🎼</button>` : ''}
+                            ${temMediaPrincipal && !ehYouTube && !ehGitHub ? `<button class="btn-github-upload" onclick="enviarItemParaGithub(this.closest('li'))" title="Enviar para o GitHub (Partitura)">🎼</button>` : ''}
                             ${temMediaPrincipal && !ehYouTube ? `<button class="btn-cache" data-url="${urlFinal}" onclick="toggleCache('${urlFinal}', this)">⬇️</button>` : ''}
                             ${temMidiaValida ? `<button class="btn-play" onclick="tocar('${item.tipo}', '${item.media.replace(/'/g, "\\'")}', '${item.cantor.replace(/'/g, "\\'")}', '${item.musica.replace(/'/g, "\\'")}', '${encodeURIComponent(JSON.stringify(item.stems))}')">▶</button>` : ''}
                             <button class="btn-delete-sheet" onclick="deletarItemPlanilha(this.closest('li'))" title="Excluir">🗑️</button>
@@ -818,9 +763,10 @@
         async function tocar(tipo, media, cantor, musica, stemsEncoded) {
             const yt = document.getElementById('yt-player');
             const audioControlsGroup = document.getElementById('audio-controls-group');
+            const loopOnlyControlsGroup = document.getElementById('loopOnlyControlsGroup');
+            const pitchPanel = document.getElementById('pitch-control-panel');
+            const progressPanel = document.getElementById('progress-panel');
             const multiplayerBox = document.getElementById('multiplayerStemsBox');
-            const stemsListContainer = document.getElementById('stemsListContainer');
-            const triggersRow = document.getElementById('triggersButtonsRow');
             
             const playerContainer = document.getElementById('main-player-container');
             if (playerContainer) playerContainer.classList.remove('player-minimized');
@@ -835,16 +781,17 @@
             if (floatCtrl) floatCtrl.style.display = 'flex';
 
             pararTonePlayer();
-            currentSemitones = 0;
             
             let parsedStems = [];
             try { parsedStems = JSON.parse(decodeURIComponent(stemsEncoded)); } catch(e){}
 
-            const ehYouTube = media && (media.includes('youtube.com') || media.includes('youtu.be') || (media.length === 11 && !media.includes('http')));
+            const temMediaPrincipal = media && media.length > 5;
+            const ehYouTube = temMediaPrincipal && (media.includes('youtube.com') || media.includes('youtu.be') || (media.length === 11 && !media.includes('http')));
             
             if (ehYouTube) {
                 isMultiplayerActive = false;
                 if (audioControlsGroup) audioControlsGroup.style.display = 'block';
+                if (loopOnlyControlsGroup) loopOnlyControlsGroup.style.display = 'none';
                 if (multiplayerBox) multiplayerBox.style.display = 'none';
                 if (yt) {
                     yt.style.display = 'block';
@@ -853,16 +800,11 @@
                 }
                 if (nowPlaying) nowPlaying.innerHTML = `Tocando: <b>${musica}</b><br><small>${cantor}</small>`;
             } else {
-                if (audioControlsGroup) audioControlsGroup.style.display = 'block';
-                if (pitchPanel = document.getElementById('pitch-control-panel')) pitchPanel.style.display = 'none';
-                if (multiplayerBox) multiplayerBox.style.display = 'flex';
-                stemsListContainer.innerHTML = 'Carregando faixas...';
-
                 try {
                     const ctx = getAudioContext();
                     stemsData = [];
                     
-                    if (media && media.length > 5 && !parsedStems.some(s => s.url === media)) {
+                    if (temMediaPrincipal) {
                         const mainBuffer = await carregarBufferAudio(normalizarUrlMidia(media));
                         const mainGain = ctx.createGain();
                         mainGain.connect(ctx.destination);
@@ -879,13 +821,19 @@
 
                     if (stemsData.length > 0) {
                         masterDuration = stemsData[0].buffer.duration;
-                        renderStemsUI();
-
-                        const temTrk2 = stemsData.some(s => s.type === 'trk2');
-                        const temTrk3 = stemsData.some(s => s.type === 'trk3');
-                        if (triggersRow) triggersRow.style.display = (temTrk2 || temTrk3) ? 'flex' : 'none';
-
                         isMultiplayerActive = true;
+
+                        // Se NÃO tem coluna E, exibe o layout exclusivo de Loop/Stems nas colunas H,I,J
+                        if (!temMediaPrincipal) {
+                            if (audioControlsGroup) audioControlsGroup.style.display = 'none';
+                            if (loopOnlyControlsGroup) loopOnlyControlsGroup.style.display = 'block';
+                        } else {
+                            if (audioControlsGroup) audioControlsGroup.style.display = 'block';
+                            if (loopOnlyControlsGroup) loopOnlyControlsGroup.style.display = 'none';
+                            if (pitchPanel) pitchPanel.style.display = 'none';
+                            if (progressPanel) progressPanel.style.display = 'flex';
+                        }
+
                         nowPlaying.innerHTML = `Pronto (Multiplayer): <b>${musica}</b><br><small>${cantor} (Clique em Play)</small>`;
                         atualizarBotoesPlayMaster("▶ Play");
                     }
@@ -908,41 +856,18 @@
             return await ctx.decodeAudioData(arrayBuffer);
         }
 
-        function renderStemsUI() {
-            const container = document.getElementById('stemsListContainer');
-            container.innerHTML = '';
-            stemsData.forEach((stem) => {
-                if (stem.type === 'trk2' || stem.type === 'trk3') return;
-                const row = document.createElement('div');
-                row.className = 'stem-row';
-                row.innerHTML = `<span>${stem.name}</span>`;
-                
-                const btn = document.createElement('button');
-                btn.className = 'btn-toggle-stem on';
-                btn.innerText = 'ON';
-                btn.onclick = () => {
-                    stem.isMuted = !stem.isMuted;
-                    stem.gainNode.gain.value = stem.isMuted ? 0 : 1;
-                    btn.className = stem.isMuted ? 'btn-toggle-stem off' : 'btn-toggle-stem on';
-                    btn.innerText = stem.isMuted ? 'OFF' : 'ON';
-                };
-                row.appendChild(btn);
-                container.appendChild(row);
-            });
-        }
-
         function playMultiplayer() {
             if (stemsData.length === 0) return;
             const ctx = getAudioContext();
             startTime = ctx.currentTime - startOffset;
 
             stemsData.forEach(stem => {
-                if (stem.type === 'trk2' || stem.type === 'trk3') return;
+                if (stem.type === 'trk2' || stem.type === 'trk3') return; // Trk2 e Trk3 só rodam nos botões específicos
                 if (stem.sourceNode) { try { stem.sourceNode.stop(); } catch(e){} }
                 
                 const source = ctx.createBufferSource();
                 source.buffer = stem.buffer;
-                source.loop = true;
+                source.loop = true; // Trk1 ou Principal rodam em loop contínuo
                 source.connect(stem.gainNode);
                 source.start(0, startOffset % stem.buffer.duration);
                 stem.sourceNode = source;
@@ -965,6 +890,7 @@
             if (progressInterval) clearInterval(progressInterval);
         }
 
+        // --- TRK2: FILL / VIRADA ---
         function dispararFillTrk2() {
             if (!isPlaying) return;
             const stemTrk2 = stemsData.find(s => s.type === 'trk2');
@@ -972,6 +898,7 @@
 
             const ctx = getAudioContext();
             
+            // Muta o loop momentaneamente
             stemsData.forEach(s => {
                 if (s.type === 'trk1' || s.type === 'main') {
                     s.gainNode.gain.value = 0;
@@ -987,6 +914,7 @@
             stemTrk2.gainNode.gain.value = 1;
             
             source.onended = () => {
+                // Restaura o loop ao terminar a virada
                 stemsData.forEach(s => {
                     if (s.type === 'trk1' || s.type === 'main') {
                         s.gainNode.gain.value = s.isMuted ? 0 : 1;
@@ -998,6 +926,7 @@
             stemTrk2.sourceNode = source;
         }
 
+        // --- TRK3: FINALIZAÇÃO ---
         function dispararEndingTrk3() {
             if (!isPlaying) return;
             const stemTrk3 = stemsData.find(s => s.type === 'trk3');
@@ -1008,6 +937,7 @@
 
             const ctx = getAudioContext();
 
+            // Para o loop imediatamente
             stemsData.forEach(s => {
                 if (s.sourceNode && s.type !== 'trk3') {
                     try { s.sourceNode.stop(); } catch(e){}
