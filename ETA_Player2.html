@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - Roberto !!</title>
+    <title>Canto ETA - Roberto !novo!</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
@@ -328,11 +328,12 @@
         const urlParams = new URLSearchParams(window.location.search);
         let GID_ATUAL = urlParams.get('gid') || '1960210650';
         
-        const CACHE_NAME = 'canto-eta-media-v27';
+        const CACHE_NAME = 'canto-eta-media-v28';
         let modoGerenciamentoAtivo = false;
         let currentSemitones = 0;
         let tomOriginalExtraido = null;
         let dadosGlobaisPlanilha = {};
+        let itemIdAtualCarregado = null; // Controla se o item atual já está aberto/carregado
 
         const NOTAS_CROMATICAS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
         const NOTAS_FLAT_MAP = { "Db":"C#", "Eb":"D#", "Gb":"F#", "Ab":"G#", "Bb":"A#" };
@@ -512,6 +513,7 @@
             currentSemitones = 0;
             tomOriginalExtraido = null;
             startOffset = 0;
+            itemIdAtualCarregado = null;
             atualizarDisplayPitch();
             
             const mainContainer = document.getElementById('main-player-container');
@@ -669,6 +671,16 @@
             if (btnToggle) btnToggle.innerText = isMin ? '▼' : '✕';
         }
 
+        // --- FUNÇÃO DO DROPDOWN DO PEDAL CORRIGIDA ---
+        function toggleDropdownMidi() {
+            const content = document.getElementById('midi-dropdown-content');
+            const arrow = document.getElementById('dropdown-arrow');
+            if (content) {
+                const isOpen = content.classList.toggle('open');
+                if (arrow) arrow.innerText = isOpen ? '▲' : '▼';
+            }
+        }
+
         function filtrarLista() {
             const input = document.getElementById('search-input');
             const termo = input.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -821,21 +833,20 @@
             
             linhas.slice(1).forEach((linha, index) => {
                 const cols = inlineSplitCSV(linha);
-                // Ignorando o carimbo de data/hora (cols[0]) e pegando o ID correto a partir da Coluna B (cols[1])
                 const id = cols[1]?.replace(/"/g, '') || ('item-'+index);
                 
                 let extraTracks = [];
-                // Coluna H (índice 6) -> Trk1 (Loop)
-                if (cols[6] && cols[6].replace(/"/g, '').trim().startsWith('http')) {
-                    extraTracks.push({ name: 'Trk1 (Loop)', url: cols[6].replace(/"/g, '').trim(), type: 'trk1' });
-                }
-                // Coluna I (índice 7) -> Trk2 (Vira / Fill)
+                // Coluna H (índice 7) -> Trk1 (Loop)
                 if (cols[7] && cols[7].replace(/"/g, '').trim().startsWith('http')) {
-                    extraTracks.push({ name: 'Trk2 (Fill)', url: cols[7].replace(/"/g, '').trim(), type: 'trk2' });
+                    extraTracks.push({ name: 'Trk1 (Loop)', url: cols[7].replace(/"/g, '').trim(), type: 'trk1' });
                 }
-                // Coluna J (índice 8) -> Trk3 (Fim)
+                // Coluna I (índice 8) -> Trk2 (Vira / Fill)
                 if (cols[8] && cols[8].replace(/"/g, '').trim().startsWith('http')) {
-                    extraTracks.push({ name: 'Trk3 (Fim)', url: cols[8].replace(/"/g, '').trim(), type: 'trk3' });
+                    extraTracks.push({ name: 'Trk2 (Fill)', url: cols[8].replace(/"/g, '').trim(), type: 'trk2' });
+                }
+                // Coluna J (índice 9) -> Trk3 (Fim)
+                if (cols[9] && cols[9].replace(/"/g, '').trim().startsWith('http')) {
+                    extraTracks.push({ name: 'Trk3 (Fim)', url: cols[9].replace(/"/g, '').trim(), type: 'trk3' });
                 }
 
                 dadosMap[id] = {
@@ -903,7 +914,7 @@
                         <div class="action-buttons">
                             ${temMediaPrincipal && !ehYouTube && !ehGitHub ? `<button class="btn-github-upload" onclick="enviarItemParaGithub(this.closest('li'))" title="Enviar para o GitHub (Partitura)">🎼</button>` : ''}
                             ${temMediaPrincipal && !ehYouTube ? `<button class="btn-cache" data-url="${urlFinal}" onclick="toggleCache('${urlFinal}', this)">⬇️</button>` : ''}
-                            ${temMidiaValida ? `<button class="btn-play" onclick="tocar('${item.tipo}', '${item.media.replace(/'/g, "\\'")}','${item.cantor.replace(/'/g, "\\'")}','${item.musica.replace(/'/g, "\\'")}','${stemsStringEncoded}', this.closest('li'))">▶</button>` : ''}
+                            ${temMidiaValida ? `<button class="btn-play" onclick="tocar('${item.id}', '${item.tipo}', '${item.media.replace(/'/g, "\\'")}','${item.cantor.replace(/'/g, "\\'")}','${item.musica.replace(/'/g, "\\'")}','${stemsStringEncoded}', this.closest('li'))">▶</button>` : ''}
                             <button class="btn-delete-sheet" onclick="deletarItemPlanilha(this.closest('li'))" title="Excluir">🗑️</button>
                         </div>
                     `;
@@ -927,7 +938,7 @@
             atualizarStatusBotoesCache();
         }
 
-        async function tocar(tipo, media, cantor, musica, stemsEncoded, elementoLi) {
+        async function tocar(idItem, tipo, media, cantor, musica, stemsEncoded, elementoLi) {
             const yt = document.getElementById('yt-player');
             const audioControlsGroup = document.getElementById('audio-controls-group');
             const loopPedalsRow = document.getElementById('loop-pedals-row');
@@ -948,8 +959,13 @@
             const notasItem = elementoLi?.querySelector('.notes-field')?.innerText || "";
             tomOriginalExtraido = extrairTomDaString(notasItem) || extrairTomDaString(musica) || extrairTomDaString(cantor);
 
+            // Verifica se é o mesmo item já aberto/carregado para forçar reinício imediato ao topo
+            const mesmoItem = (itemIdAtualCarregado === idItem);
+            itemIdAtualCarregado = idItem;
+
             pararTonePlayer();
             currentSemitones = 0;
+            startOffset = 0;
             atualizarDisplayPitch();
             
             let parsedStems = [];
@@ -967,7 +983,7 @@
                 if (yt) {
                     yt.style.display = 'block';
                     let id = media.includes('v=') ? media.split('v=')[1].split('&')[0] : (media.includes('be/') ? media.split('be/')[1] : media);
-                    yt.src = `https://www.youtube.com/embed/${id}?autoplay=0`;
+                    yt.src = `https://www.youtube.com/embed/${id}?autoplay=1`;
                 }
                 if (nowPlaying) nowPlaying.innerHTML = `Tocando: <b>${musica}</b><br><small>${cantor}</small>`;
             } else if (temMediaPrincipal && ehGitHub) {
@@ -996,6 +1012,7 @@
 
                     nowPlaying.innerHTML = `Pronto: <b>${musica}</b><br><small>${cantor}</small>`;
                     atualizarBotoesPlayMaster("▶ Play");
+                    restartMedia(); // Inicia e aponta para o início automaticamente
                 } catch(e) {
                     console.error("Erro Tone.js:", e);
                     alert("Erro ao carregar o player de áudio.");
@@ -1019,6 +1036,7 @@
 
                 nowPlaying.innerHTML = `Pronto: <b>${musica}</b><br><small>${cantor}</small>`;
                 atualizarBotoesPlayMaster("▶ Play");
+                restartMedia(); // Inicia e aponta para o início automaticamente
             } else {
                 // Modo Loop / Multiplayer (Colunas H, I, J)
                 try {
@@ -1043,6 +1061,7 @@
 
                         nowPlaying.innerHTML = `Pronto (Loop): <b>${musica}</b><br><small>${cantor}</small>`;
                         atualizarBotoesPlayMaster("▶ Loop");
+                        restartMedia(); // Inicia e aponta para o início automaticamente
                     }
                 } catch(err) {
                     console.error(err);
