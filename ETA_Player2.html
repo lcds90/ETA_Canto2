@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - Roberto #</title>
+    <title>Canto ETA - Roberto !#!</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    <!-- Tone.js oficial via CDN do Cloudflare -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
         body {
@@ -47,7 +46,7 @@
             box-sizing: border-box;
         }
         .player-minimized { resize: none; min-height: 45px; padding-bottom: 10px; }        
-        .player-minimized #yt-player, .player-minimized .pitch-control-box, .player-minimized .progress-container, .player-minimized .master-controls-row { display: none !important; }        
+        .player-minimized #yt-player, .player-minimized .pitch-control-box, .player-minimized .progress-container, .player-minimized .master-controls-row, .player-minimized .multiplayer-stems-box { display: none !important; }        
         
         #now-playing { font-weight: bold; margin-bottom: 8px; font-size: 1em; padding-right: 40px; }
         
@@ -83,6 +82,20 @@
         }
         .btn-pitch:active { background: rgba(255, 255, 255, 0.3); }
         #pitch-val-display { font-family: monospace; font-size: 0.9em; font-weight: bold; color: #00bcd4; min-width: 35px; text-align: center; }
+
+        /* Estilo dinâmico para painel de Multiplayer / Stems */
+        .multiplayer-stems-box {
+            display: none; margin-top: 10px; background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 188, 212, 0.3); border-radius: 10px;
+            padding: 10px; flex-direction: column; gap: 6px;
+        }
+        .stem-row {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255, 255, 255, 0.08); padding: 6px 10px; border-radius: 6px; font-size: 0.85em;
+        }
+        .btn-toggle-stem { padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; min-width: 50px; cursor: pointer; border: none; font-weight: bold; }
+        .btn-toggle-stem.on { background: #4caf50; color: #fff; }
+        .btn-toggle-stem.off { background: #424242; color: #b0b0b0; }
 
         #yt-player { 
             display: none; width: 100%; aspect-ratio: 16/9; border-radius: 10px; border: none; margin-top: 15px; 
@@ -150,31 +163,40 @@
         .separator-content { display: grid; grid-template-columns: 35px 1fr; align-items: center; }
         .separator-title { font-size: 1.2em; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; text-align: center; width: 100%; color: #ff4; }
 
-        .li-main-row { display: grid; grid-template-columns: 35px 35px 1fr auto; align-items: center; gap: 10px; }
-        .drag-handle { cursor: grab; color: rgba(255,255,255,0.4); font-size: 22px; touch-action: none; padding: 10px; }
-        .song-info { display: flex; flex-direction: column; overflow: hidden; }
-        .interpreter { color: #ff4; font-weight: bold; font-size: 1.03em; text-transform: uppercase; }
-        .song-title { font-size: 1.01em; color: #fff; }
+        .li-main-row { display: flex; align-items: center; gap: 8px; width: 100%; }
+        .drag-handle { cursor: grab; color: rgba(255,255,255,0.4); font-size: 20px; touch-action: none; padding: 5px; flex-shrink: 0; }
+        .chk-done { flex-shrink: 0; width: 20px; height: 20px; cursor: pointer; }
+        .song-info { display: flex; flex-direction: column; flex: 1; min-width: 0; overflow: hidden; }
+        .interpreter { color: #ff4; font-weight: bold; font-size: 0.98em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .song-title { font-size: 0.95em; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .action-buttons { display: flex; gap: 8px; }
+        .action-buttons { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
         .btn-play {
             background: rgba(255, 255, 255, 0.1); color: #ff4; border: none;
-            border-radius: 50%; width: 48px; height: 48px; cursor: pointer; font-size: 1.3em;
-            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; width: 42px; height: 42px; cursor: pointer; font-size: 1.1em;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
         .btn-cache {
             background: rgba(255, 255, 255, 0.1); color: #fff; border: none;
-            border-radius: 50%; width: 48px; height: 48px; cursor: pointer; font-size: 1.1em;
-            display: flex; align-items: center; justify-content: center; transition: 0.3s background;
+            border-radius: 50%; width: 42px; height: 42px; cursor: pointer; font-size: 1em;
+            display: flex; align-items: center; justify-content: center; transition: 0.3s background; flex-shrink: 0;
         }
         .btn-cache.cached { background: rgba(30, 180, 80, 0.6); color: #fff; }
+        
+        .btn-github-upload {
+            background: rgba(0, 150, 255, 0.6); color: #fff; border: none;
+            border-radius: 50%; width: 42px; height: 42px; cursor: pointer; font-size: 1em;
+            display: flex; align-items: center; justify-content: center; transition: 0.3s background; flex-shrink: 0;
+        }
+        .btn-github-upload:hover { background: rgba(0, 150, 255, 0.9); }
+
         .btn-delete-sheet {
             background: rgba(220, 20, 20, 0.9); color: #fff; border: none;
-            border-radius: 50%; width: 48px; height: 48px; cursor: pointer;
-            display: none; align-items: center; justify-content: center; font-size: 1.2em;
+            border-radius: 50%; width: 42px; height: 42px; cursor: pointer;
+            display: none; align-items: center; justify-content: center; font-size: 1.1em; flex-shrink: 0;
         }
         
-        body.modo-gerenciamento .btn-play, body.modo-gerenciamento .btn-cache { display: none !important; }
+        body.modo-gerenciamento .btn-play, body.modo-gerenciamento .btn-cache, body.modo-gerenciamento .btn-github-upload { display: none !important; }
         body.modo-gerenciamento .btn-delete-sheet { display: flex !important; }
 
         .done { opacity: 0.3; filter: grayscale(100%); }
@@ -189,27 +211,36 @@
         <button class="toggle-player" id="btn-toggle" onclick="togglePlayer()">▼</button>
         <div id="now-playing">Selecione uma faixa</div>
         
-        <div class="master-controls-row">
-            <button class="btn-master-action" onclick="restartMedia()">↺ Início</button>
-            <button class="btn-master-action" id="btn-main-play" onclick="togglePlayPauseMaster()">▶ Play</button>
-            <button class="btn-master-action" onclick="stopAll()" style="color: #ff6b6b;">■ Stop</button>
-        </div>
-
-        <div id="progress-panel" class="progress-container">
-            <input type="range" id="seek-bar" class="seek-slider" min="0" max="100" value="0" oninput="seekingAudio(this.value)">
-            <div class="time-display">
-                <span id="time-current">00:00</span>
-                <span id="time-total">00:00</span>
+        <!-- Controles Master -->
+        <div id="audio-controls-group">
+            <div class="master-controls-row">
+                <button class="btn-master-action" onclick="restartMedia()">↺ Início</button>
+                <button class="btn-master-action" id="btn-main-play" onclick="togglePlayPauseMaster()">▶ Play</button>
+                <button class="btn-master-action" onclick="stopAll()" style="color: #ff6b6b;">■ Stop</button>
             </div>
-        </div>
 
-        <div id="pitch-control-panel" class="pitch-control-box">
-            <span class="pitch-label" id="pitch-key-label">🎵 Tom: --</span>
-            <div class="pitch-buttons-group">
-                <button class="btn-pitch" onclick="alterarPitch(-1)">-</button>
-                <span id="pitch-val-display">0 st</span>
-                <button class="btn-pitch" onclick="alterarPitch(1)">+</button>
-                <button class="btn-pitch" style="font-size: 0.75em; padding: 5px 6px;" onclick="resetarPitch()" title="Resetar Tom">Reset</button>
+            <div id="progress-panel" class="progress-container">
+                <input type="range" id="seek-bar" class="seek-slider" min="0" max="100" value="0" oninput="seekingAudio(this.value)">
+                <div class="time-display">
+                    <span id="time-current">00:00</span>
+                    <span id="time-total">00:00</span>
+                </div>
+            </div>
+
+            <div id="pitch-control-panel" class="pitch-control-box">
+                <span class="pitch-label" id="pitch-key-label">🎵 Tom: --</span>
+                <div class="pitch-buttons-group">
+                    <button class="btn-pitch" onclick="alterarPitch(-1)">-</button>
+                    <span id="pitch-val-display">0 st</span>
+                    <button class="btn-pitch" onclick="alterarPitch(1)">+</button>
+                    <button class="btn-pitch" style="font-size: 0.75em; padding: 5px 6px;" onclick="resetarPitch()" title="Resetar Tom">Reset</button>
+                </div>
+            </div>
+
+            <!-- Caixa dinâmica para múltiplas faixas / stems / loops -->
+            <div id="multiplayerStemsBox" class="multiplayer-stems-box">
+                <div style="font-size: 0.8rem; color: #00bcd4; font-weight: bold; text-align: left;">🎛️ CANAIS / STEMS DA MÚSICA:</div>
+                <div id="stemsListContainer"></div>
             </div>
         </div>
 
@@ -258,12 +289,27 @@
         const urlParams = new URLSearchParams(window.location.search);
         let GID_ATUAL = urlParams.get('gid') || '1960210650';
         
-        const CACHE_NAME = 'canto-eta-media-v9';
+        const CACHE_NAME = 'canto-eta-media-v10';
         let modoGerenciamentoAtivo = false;
         let currentSemitones = 0;
         let tomOriginalExtraido = null;
+        let dadosGlobaisPlanilha = {};
 
-        let audioElementNativo = null;
+        // Web Audio / Multiplayer Structures
+        let audioCtx = null;
+        function getAudioContext() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            return audioCtx;
+        }
+
+        let stemsData = []; // { name, buffer, gainNode, sourceNode, isMuted, url }
+        let isMultiplayerActive = false;
+        let isPlaying = false;
+        let startTime = 0;
+        let startOffset = 0;
+        let masterDuration = 0;
+
         let tonePitchShift = null;
         let tonePlayerNode = null;
         let progressInterval = null;
@@ -392,6 +438,13 @@
                 audioElementNativo.src = "";
                 audioElementNativo = null;
             }
+            // Para também os nós de stems do Web Audio se estiverem rodando
+            stemsData.forEach(stem => {
+                if (stem.sourceNode) {
+                    try { stem.sourceNode.stop(); } catch(e){}
+                    stem.sourceNode = null;
+                }
+            });
             if (tonePitchShift) {
                 try { tonePitchShift.dispose(); } catch(e){}
                 tonePitchShift = null;
@@ -404,24 +457,19 @@
                 clearInterval(progressInterval);
                 progressInterval = null;
             }
+            isPlaying = false;
         }
 
         function stopAll() {
             const yt = document.getElementById('yt-player');
-            const floatCtrl = document.getElementById('float-ctrl');
-            if (floatCtrl) floatCtrl.style.display = 'none';
-            
-            const pitchPanel = document.getElementById('pitch-control-panel');
-            const progressPanel = document.getElementById('progress-panel');
-            if (pitchPanel) pitchPanel.style.display = 'flex';
-            if (progressPanel) progressPanel.style.display = 'flex';
+            const audioControlsGroup = document.getElementById('audio-controls-group');
+            if (audioControlsGroup) audioControlsGroup.style.display = 'block';
 
             if (yt) { yt.src = ""; yt.style.display = 'none'; }
-            
             pararTonePlayer();
-            
             currentSemitones = 0;
             tomOriginalExtraido = null;
+            startOffset = 0;
             atualizarDisplayPitch();
             
             const mainContainer = document.getElementById('main-player-container');
@@ -444,13 +492,16 @@
         }
 
         async function togglePlayPauseMaster() {
-            if (!audioElementNativo) return;
+            if (isMultiplayerActive) {
+                if (!isPlaying) playMultiplayer();
+                else pauseMultiplayer();
+                return;
+            }
 
+            if (!audioElementNativo) return;
             try {
                 await Tone.start();
-                if (Tone.context.state !== 'running') {
-                    await Tone.context.resume();
-                }
+                if (Tone.context.state !== 'running') { await Tone.context.resume(); }
             } catch(e) {}
 
             if (!audioElementNativo.paused) {
@@ -462,13 +513,18 @@
                     atualizarBotoesPlayMaster("⏸ Pausar");
                     iniciarMonitoramentoProgressoNativo();
                 }).catch(err => {
-                    console.error("Erro ao reproduzir áudio nativo:", err);
-                    alert("O navegador bloqueou a reprodução automática. Tente clicar novamente em Play.");
+                    console.error("Erro ao reproduzir:", err);
+                    alert("O navegador bloqueou a reprodução automática. Clique novamente em Play.");
                 });
             }
         }
 
         function restartMedia() {
+            if (isMultiplayerActive) {
+                startOffset = 0;
+                playMultiplayer();
+                return;
+            }
             if (!audioElementNativo) return;
             audioElementNativo.currentTime = 0;
             audioElementNativo.play();
@@ -477,6 +533,11 @@
         }
 
         function seekingAudio(valPorcentagem) {
+            if (isMultiplayerActive && masterDuration > 0) {
+                startOffset = (valPorcentagem / 100) * masterDuration;
+                if (isPlaying) playMultiplayer();
+                return;
+            }
             if (!audioElementNativo || !audioElementNativo.duration) return;
             const duracaoTotal = audioElementNativo.duration;
             const novoTempo = (valPorcentagem / 100) * duracaoTotal;
@@ -490,9 +551,7 @@
             if (novoValor >= -3 && novoValor <= 3) {
                 currentSemitones = novoValor;
                 atualizarDisplayPitch();
-                if (tonePitchShift) {
-                    tonePitchShift.pitch = currentSemitones;
-                }
+                if (tonePitchShift) tonePitchShift.pitch = currentSemitones;
             }
         }
 
@@ -544,43 +603,71 @@
             }
         }
 
-        // --- FUNÇÃO DE EXCLUSÃO CORRIGIDA COM DATASET ---
-async function deletarItemPlanilha(elementoLi) {
-    const dia = getNomeDiaAtual();
-    const musica = elementoLi.querySelector('.song-title')?.innerText.trim() || '';
-    const cantor = elementoLi.querySelector('.interpreter')?.innerText.trim() || '';
-    const urlMedia = elementoLi.dataset.media || '';
+        // --- ENVIAR ITEM ESPECÍFICO PARA O GITHUB (🎼) ---
+        async function enviarItemParaGithub(elementoLi) {
+            const dia = getNomeDiaAtual();
+            const idItem = elementoLi.dataset.id;
+            const dadosItem = dadosGlobaisPlanilha[idItem] || {};
+            const musica = dadosItem.musica || "esta música";
 
-    if (!confirm(`Deseja realmente apagar "${musica}" da planilha e do GitHub?`)) return;
+            if (!confirm(`Deseja carregar sua musica "${musica}" para o servidor GitHub?`)) return;
 
-    try {
-        elementoLi.style.opacity = "0.3";
+            try {
+                elementoLi.style.opacity = "0.5";
+                alert(`A musica está sendo enviada. sua lista será atualizada em alguns minutos`);
 
-        // 1. Deleta do cache do navegador (se existir)
-        if (urlMedia) {
-            const cache = await caches.open(CACHE_NAME);
-            await cache.delete(urlMedia);
+                const cantor = dadosItem.cantor || "";
+                const nomeConcatenado = `${musica} (${cantor})`;
+                const query = `acao=enviarItemGithub&dia=${encodeURIComponent(dia)}&nome=${encodeURIComponent(nomeConcatenado)}`;
+                
+                const resposta = await fetch(`${WEB_APP_URL}?${query}`, { method: 'GET' });
+                const textoResposta = await resposta.text();
+
+                if (textoResposta.includes("Erro")) {
+                    throw new Error(textoResposta);
+                }
+
+                elementoLi.style.opacity = "1";
+                carregar(); 
+            } catch (error) {
+                console.error("Erro ao enviar para o GitHub:", error);
+                alert("Erro ao comunicar com o servidor: " + error.message);
+                elementoLi.style.opacity = "1";
+            }
         }
 
-        // 2, 3 e 4. Dispara a rota única do Apps Script que vai buscar o token interno, apaga do GitHub e limpa a planilha
-        const query = `acao=apagarItem&dia=${encodeURIComponent(dia)}&nome=${encodeURIComponent(musica + ' (' + cantor + ')')}&media=${encodeURIComponent(urlMedia)}`;
-        
-        const resposta = await fetch(`${WEB_APP_URL}?${query}`, { method: 'GET' });
-        const textoResposta = await resposta.text();
+        async function deletarItemPlanilha(elementoLi) {
+            const dia = getNomeDiaAtual();
+            const idItem = elementoLi.dataset.id;
+            const dadosItem = dadosGlobaisPlanilha[idItem] || {};
+            
+            const musica = dadosItem.musica || elementoLi.querySelector('.song-title')?.innerText.trim() || '';
+            const cantor = dadosItem.cantor || elementoLi.querySelector('.interpreter')?.innerText.trim() || '';
+            
+            const nomeConcatenado = `${musica} (${cantor})`;
 
-        if (textoResposta.includes("Erro")) {
-            throw new Error(textoResposta);
+            if (!confirm(`Deseja realmente apagar "${musica}" da planilha?`)) return;
+
+            try {
+                elementoLi.style.opacity = "0.3";
+                const query = `acao=apagarItem&dia=${encodeURIComponent(dia)}&nome=${encodeURIComponent(nomeConcatenado)}`;
+                
+                const resposta = await fetch(`${WEB_APP_URL}?${query}`, { method: 'GET' });
+                const textoResposta = await resposta.text();
+
+                if (textoResposta.includes("Erro")) {
+                    throw new Error(textoResposta);
+                }
+
+                elementoLi.remove();
+                salvarEstadoLocal();
+                alert("Item apagado com sucesso da planilha!");
+            } catch (error) {
+                console.error("Erro ao apagar:", error);
+                alert("Erro ao comunicar com o servidor: " + error.message);
+                elementoLi.style.opacity = "1";
+            }
         }
-
-        elementoLi.remove();
-        salvarEstadoLocal();
-        alert("Item apagado com sucesso do GitHub, da planilha e do cache!");
-    } catch (error) {
-        console.error("Erro ao apagar:", error);
-        alert("Erro ao comunicar com o servidor: " + error.message);
-        elementoLi.style.opacity = "1";
-    }
-}
 
         async function toggleCache(url, btnElement) {
             if (!url) return;
@@ -660,7 +747,7 @@ async function deletarItemPlanilha(elementoLi) {
                 const texto = await resposta.text();
                 renderizar(texto);
             } catch (erro) {
-                console.error("Erro ao carregar dados da planilha:", erro);
+                console.error("Erro ao carregar dados:", erro);
                 if (lista) lista.innerHTML = '<p style="text-align:center; color: #ff6b6b;">Erro ao carregar a lista.</p>';
             }
         }
@@ -675,14 +762,26 @@ async function deletarItemPlanilha(elementoLi) {
             linhas.slice(1).forEach((linha, index) => {
                 const cols = inlineSplitCSV(linha);
                 const id = cols[0]?.replace(/"/g, '') || ('item-'+index);
+                
+                // Suporte preparado para colunas adicionais de Multiplayer / Stems (ex: Colunas F e G extras)
+                let extraTracks = [];
+                if (cols[5] && cols[5].replace(/"/g, '').trim().startsWith('http')) {
+                    extraTracks.push({ name: 'Faixa 2', url: cols[5].replace(/"/g, '').trim() });
+                }
+                if (cols[6] && cols[6].replace(/"/g, '').trim().startsWith('http')) {
+                    extraTracks.push({ name: 'Faixa 3', url: cols[6].replace(/"/g, '').trim() });
+                }
+
                 dadosMap[id] = {
                     id: id, cantor: cols[1]?.replace(/"/g, '') || '',
                     musica: cols[2]?.replace(/"/g, '') || '',
                     media: cols[3]?.replace(/"/g, '').trim() || '',
                     tipo: (cols[4]?.replace(/"/g, '') || '').toLowerCase().trim(),
-                    notes: cols[5]?.replace(/"/g, '') || ''
+                    notes: cols[7]?.replace(/"/g, '') || cols[5]?.replace(/"/g, '') || '',
+                    stems: extraTracks
                 };
             });
+            dadosGlobaisPlanilha = dadosMap;
 
             const salva = safeGetLocal('ordem_' + GID_ATUAL);
             let idsOrdenados = Object.keys(dadosMap);
@@ -705,7 +804,7 @@ async function deletarItemPlanilha(elementoLi) {
                 li.dataset.id = item.id;
                 
                 const urlFinal = normalizarUrlMidia(item.media);
-                li.dataset.media = urlFinal; // Garante que a URL fica guardada no elemento li para exclusão fiável
+                li.dataset.media = urlFinal;
 
                 if (item.tipo === 'separador') {
                     li.classList.add('is-separator');
@@ -716,13 +815,21 @@ async function deletarItemPlanilha(elementoLi) {
                     const notaFinal = (salvoInfo.notas && salvoInfo.notas.trim() !== "") ? salvoInfo.notas : item.notes;
                     const temMidia = item.media && item.media.length > 5;
                     const ehYouTube = item.media && (item.media.includes('youtube.com') || item.media.includes('youtu.be') || item.media.length === 11);
+                    const ehGitHub = item.media && (item.media.includes('github.io') || item.media.includes('github.com'));
 
-                    let displayHTML = item.tipo === 'estudo' ? `<span class="interpreter">${item.musica}</span><span class="song-title">${item.cantor}</span>` : `<span class="interpreter">${item.cantor}</span><span class="song-title">${item.musica}</span>`;
+                    let displayHTML = '';
+                    if (item.tipo === 'estudo') {
+                        li.classList.add('is-study');
+                        displayHTML = `<span class="interpreter">${item.musica}</span><span class="song-title">${item.cantor}</span>`;
+                    } else {
+                        displayHTML = `<span class="interpreter">${item.cantor}</span><span class="song-title">${item.musica}</span>`;
+                    }
 
                     let botoesAcao = `
                         <div class="action-buttons">
+                            ${temMidia && !ehYouTube && !ehGitHub ? `<button class="btn-github-upload" onclick="enviarItemParaGithub(this.closest('li'))" title="Enviar para o GitHub (Partitura)">🎼</button>` : ''}
                             ${temMidia && !ehYouTube ? `<button class="btn-cache" data-url="${urlFinal}" onclick="toggleCache('${urlFinal}', this)">⬇️</button>` : ''}
-                            ${temMidia ? `<button class="btn-play" onclick="tocar('${item.tipo}', '${item.media.replace(/'/g, "\\'")}', '${item.cantor.replace(/'/g, "\\'")}', '${item.musica.replace(/'/g, "\\'")}', this.closest('li'))">▶</button>` : ''}
+                            ${temMidia ? `<button class="btn-play" onclick="tocar('${item.tipo}', '${item.media.replace(/'/g, "\\'")}', '${item.cantor.replace(/'/g, "\\'")}', '${item.musica.replace(/'/g, "\\'")}', '${encodeURIComponent(JSON.stringify(item.stems))}')">▶</button>` : ''}
                             <button class="btn-delete-sheet" onclick="deletarItemPlanilha(this.closest('li'))" title="Excluir">🗑️</button>
                         </div>
                     `;
@@ -746,10 +853,12 @@ async function deletarItemPlanilha(elementoLi) {
             atualizarStatusBotoesCache();
         }
 
-        async function tocar(tipo, media, cantor, musica, elementoLi) {
+        // --- MOTOR DE MULTIPLAYER E REPRODUÇÃO ---
+        async function tocar(tipo, media, cantor, musica, stemsEncoded) {
             const yt = document.getElementById('yt-player');
-            const pitchPanel = document.getElementById('pitch-control-panel');
-            const progressPanel = document.getElementById('progress-panel');
+            const audioControlsGroup = document.getElementById('audio-controls-group');
+            const multiplayerBox = document.getElementById('multiplayerStemsBox');
+            const stemsListContainer = document.getElementById('stemsListContainer');
             
             const playerContainer = document.getElementById('main-player-container');
             if (playerContainer) playerContainer.classList.remove('player-minimized');
@@ -762,11 +871,7 @@ async function deletarItemPlanilha(elementoLi) {
             
             const floatCtrl = document.getElementById('float-ctrl');
             if (floatCtrl) floatCtrl.style.display = 'flex';
-            
-            const notasItem = elementoLi?.querySelector('.notes-field')?.innerText || "";
-            tomOriginalExtraido = extrairTomDaString(notasItem) || extrairTomDaString(musica) || extrairTomDaString(cantor);
 
-            if (yt) { yt.src = ""; yt.style.display = 'none'; }
             pararTonePlayer();
             currentSemitones = 0;
             atualizarDisplayPitch();
@@ -774,8 +879,9 @@ async function deletarItemPlanilha(elementoLi) {
             const ehYouTube = media.includes('youtube.com') || media.includes('youtu.be') || (media.length === 11 && !media.includes('http'));
             
             if (ehYouTube) {
-                if (pitchPanel) pitchPanel.style.display = 'none';
-                if (progressPanel) progressPanel.style.display = 'none';
+                isMultiplayerActive = false;
+                if (audioControlsGroup) audioControlsGroup.style.display = 'none';
+                if (multiplayerBox) multiplayerBox.style.display = 'none';
                 if (yt) {
                     yt.style.display = 'block';
                     let id = media.includes('v=') ? media.split('v=')[1].split('&')[0] : (media.includes('be/') ? media.split('be/')[1] : media);
@@ -783,53 +889,169 @@ async function deletarItemPlanilha(elementoLi) {
                 }
                 if (nowPlaying) nowPlaying.innerHTML = `Tocando: <b>${musica}</b><br><small>${cantor}</small>`;
             } else {
-                if (pitchPanel) pitchPanel.style.display = 'flex';
-                if (progressPanel) progressPanel.style.display = 'flex';
-                
-                let url = normalizarUrlMidia(media);
-                const ehDropbox = url.includes('dropbox.com');
+                if (audioControlsGroup) audioControlsGroup.style.display = 'block';
+                let parsedStems = [];
+                try { parsedStems = JSON.parse(decodeURIComponent(stemsEncoded)); } catch(e){}
 
-                try {
-                    audioElementNativo = new Audio();
-                    if (!ehDropbox) { audioElementNativo.crossOrigin = "anonymous"; }
-                    audioElementNativo.src = url;
+                // Se houver faixas extras, ativa o modo Multiplayer (Web Audio API)
+                if (parsedStems.length > 0) {
+                    isMultiplayerActive = true;
+                    if (pitchPanel = document.getElementById('pitch-control-panel')) pitchPanel.style.display = 'none'; // Stems usam buffer puro
+                    if (multiplayerBox) multiplayerBox.style.display = 'flex';
+                    stemsListContainer.innerHTML = 'Carregando canais...';
 
-                    audioElementNativo.onloadedmetadata = async () => {
-                        const timeTotal = document.getElementById('time-total');
-                        const timeCurrent = document.getElementById('time-current');
-                        const seekBar = document.getElementById('seek-bar');
+                    try {
+                        const ctx = getAudioContext();
+                        stemsData = [];
                         
-                        if (timeTotal) timeTotal.innerText = formatarTempo(audioElementNativo.duration);
-                        if (timeCurrent) timeCurrent.innerText = "00:00";
-                        if (seekBar) seekBar.value = 0;
+                        // Faixa Principal
+                        const mainBuffer = await carregarBufferAudio(normalizarUrlMidia(media));
+                        const mainGain = ctx.createGain();
+                        mainGain.connect(ctx.destination);
+                        stemsData.push({ name: 'Principal / Voz', buffer: mainBuffer, gainNode: mainGain, isMuted: false });
 
-                        if (!ehDropbox) {
-                            try {
-                                await Tone.start();
-                                if (Tone.context.state !== 'running') { await Tone.context.resume(); }
-                                tonePitchShift = new Tone.PitchShift({ pitch: currentSemitones }).toDestination();
-                                tonePlayerNode = Tone.context.createMediaElementSource(audioElementNativo);
-                                Tone.connect(tonePlayerNode, tonePitchShift);
-                            } catch(err) {
-                                console.error("Erro ao ligar ao Tone.js PitchShift:", err);
-                            }
+                        // Faixas Adicionais (Stems/Loops)
+                        for (let i = 0; i < parsedStems.length; i++) {
+                            const sUrl = normalizarUrlMidia(parsedStems[i].url);
+                            const sBuffer = await carregarBufferAudio(sUrl);
+                            const sGain = ctx.createGain();
+                            sGain.connect(ctx.destination);
+                            stemsData.push({ name: parsedStems[i].name || `Pista ${i+2}`, buffer: sBuffer, gainNode: sGain, isMuted: false });
                         }
 
-                        if (nowPlaying) nowPlaying.innerHTML = `Pronto: <b>${musica}</b><br><small>${cantor} (Clique em Play)</small>`;
+                        masterDuration = stemsData[0].buffer.duration;
+                        renderStemsUI();
+
+                        nowPlaying.innerHTML = `Pronto (Multiplayer): <b>${musica}</b><br><small>${cantor} (Clique em Play)</small>`;
                         atualizarBotoesPlayMaster("▶ Play");
-                    };
+                    } catch(err) {
+                        console.error(err);
+                        alert("Erro ao carregar os buffers do multiplayer.");
+                    }
+                } else {
+                    // Modo Áudio Simples com Pitch / Tone.js
+                    isMultiplayerActive = false;
+                    if (multiplayerBox) multiplayerBox.style.display = 'none';
+                    if (pitchPanel = document.getElementById('pitch-control-panel')) pitchPanel.style.display = 'flex';
 
-                    audioElementNativo.onerror = (e) => {
-                        console.error("Erro no carregamento do ficheiro:", e);
-                        alert(`Erro ao carregar o ficheiro de áudio:\n${url}`);
-                    };
+                    let url = normalizarUrlMidia(media);
+                    const ehDropbox = url.includes('dropbox.com');
 
-                    audioElementNativo.load();
-                } catch (err) {
-                    console.error("Erro:", err);
-                    alert("Erro ao iniciar o motor de áudio.");
+                    try {
+                        audioElementNativo = new Audio();
+                        if (!ehDropbox) { audioElementNativo.crossOrigin = "anonymous"; }
+                        audioElementNativo.src = url;
+
+                        audioElementNativo.onloadedmetadata = async () => {
+                            const timeTotal = document.getElementById('time-total');
+                            const timeCurrent = document.getElementById('time-current');
+                            const seekBar = document.getElementById('seek-bar');
+                            
+                            if (timeTotal) timeTotal.innerText = formatarTempo(audioElementNativo.duration);
+                            if (timeCurrent) timeCurrent.innerText = "00:00";
+                            if (seekBar) seekBar.value = 0;
+
+                            if (!ehDropbox) {
+                                try {
+                                    await Tone.start();
+                                    if (Tone.context.state !== 'running') { await Tone.context.resume(); }
+                                    tonePitchShift = new Tone.PitchShift({ pitch: currentSemitones }).toDestination();
+                                    tonePlayerNode = Tone.context.createMediaElementSource(audioElementNativo);
+                                    Tone.connect(tonePlayerNode, tonePitchShift);
+                                } catch(err) { console.error(err); }
+                            }
+
+                            nowPlaying.innerHTML = `Pronto: <b>${musica}</b><br><small>${cantor} (Clique em Play)</small>`;
+                            atualizarBotoesPlayMaster("▶ Play");
+                        };
+
+                        audioElementNativo.load();
+                    } catch (err) { console.error(err); }
                 }
             }
+        }
+
+        async function carregarBufferAudio(url) {
+            const ctx = getAudioContext();
+            const cache = await caches.open(CACHE_NAME);
+            let response = await cache.match(url);
+            if (!response) {
+                response = await fetch(url);
+                if (response.ok) cache.put(url, response.clone());
+            }
+            const arrayBuffer = await response.arrayBuffer();
+            return await ctx.decodeAudioData(arrayBuffer);
+        }
+
+        function renderStemsUI() {
+            const container = document.getElementById('stemsListContainer');
+            container.innerHTML = '';
+            stemsData.forEach((stem, index) => {
+                const row = document.createElement('div');
+                row.className = 'stem-row';
+                row.innerHTML = `<span>${stem.name}</span>`;
+                
+                const btn = document.createElement('button');
+                btn.className = 'btn-toggle-stem on';
+                btn.innerText = 'ON';
+                btn.onclick = () => {
+                    stem.isMuted = !stem.isMuted;
+                    stem.gainNode.gain.value = stem.isMuted ? 0 : 1;
+                    btn.className = stem.isMuted ? 'btn-toggle-stem off' : 'btn-toggle-stem on';
+                    btn.innerText = stem.isMuted ? 'OFF' : 'ON';
+                };
+                row.appendChild(btn);
+                container.appendChild(row);
+            });
+        }
+
+        function playMultiplayer() {
+            if (stemsData.length === 0) return;
+            const ctx = getAudioContext();
+            startTime = ctx.currentTime - startOffset;
+
+            stemsData.forEach(stem => {
+                if (stem.sourceNode) { try { stem.sourceNode.stop(); } catch(e){} }
+                const source = ctx.createBufferSource();
+                source.buffer = stem.buffer;
+                source.loop = true;
+                source.connect(stem.gainNode);
+                source.start(0, startOffset % stem.buffer.duration);
+                stem.sourceNode = source;
+            });
+
+            isPlaying = true;
+            atualizarBotoesPlayMaster("⏸ Pausar");
+            iniciarMonitoramentoMultiplayer();
+        }
+
+        function pauseMultiplayer() {
+            if (!isPlaying) return;
+            const ctx = getAudioContext();
+            startOffset = ctx.currentTime - startTime;
+            stemsData.forEach(stem => {
+                if (stem.sourceNode) { try { stem.sourceNode.stop(); } catch(e){} stem.sourceNode = null; }
+            });
+            isPlaying = false;
+            atualizarBotoesPlayMaster("▶ Play");
+            if (progressInterval) clearInterval(progressInterval);
+        }
+
+        function iniciarMonitoramentoMultiplayer() {
+            if (progressInterval) clearInterval(progressInterval);
+            progressInterval = setInterval(() => {
+                if (!isPlaying || masterDuration === 0) return;
+                const ctx = getAudioContext();
+                const currentPos = (ctx.currentTime - startTime) % masterDuration;
+
+                const seekBar = document.getElementById('seek-bar');
+                const timeCurrent = document.getElementById('time-current');
+                const timeTotal = document.getElementById('time-total');
+
+                if (seekBar) seekBar.value = (currentPos / masterDuration) * 100;
+                if (timeCurrent) timeCurrent.innerText = formatarTempo(currentPos);
+                if (timeTotal) timeTotal.innerText = formatarTempo(masterDuration);
+            }, 100);
         }
 
         function iniciarMonitoramentoProgressoNativo() {
@@ -852,6 +1074,21 @@ async function deletarItemPlanilha(elementoLi) {
                 }
             }, 200);
         }
+
+        // --- INTEGRAÇÃO COM PEDAL MIDI / TECLADO (M-VAVE CHOCOLATE PLUS) ---
+        document.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            // Mapeamento padrão do Chocolate Plus (ex: PageUp, PageDown, Espaço, Enter)
+            if ([' ', 'pagedown', 'pageup', 'arrowup', 'arrowdown', 'enter'].includes(key)) {
+                e.preventDefault();
+            }
+
+            if (key === ' ' || key === 'enter' || key === 'pagedown') {
+                togglePlayPauseMaster();
+            } else if (key === 'pageup' || key === 'escape') {
+                stopAll();
+            }
+        });
 
         window.addEventListener('DOMContentLoaded', carregar);
     </script>
