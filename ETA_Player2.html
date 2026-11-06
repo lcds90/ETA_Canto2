@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - Roberto !🎸🥁🎤!</title>
+    <title>Canto ETA - Roberto ! !</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
@@ -46,7 +46,7 @@
             box-sizing: border-box;
         }
         .player-minimized { resize: none; min-height: 45px; padding-bottom: 10px; }        
-        .player-minimized #yt-player, .player-minimized .pitch-control-box, .player-minimized .progress-container, .player-minimized .master-controls-row, .player-minimized .multiplayer-stems-box { display: none !important; }        
+        .player-minimized #yt-player, .player-minimized .pitch-control-box, .player-minimized .progress-container, .player-minimized .master-controls-row, .player-minimized .multiplayer-stems-box, .player-minimized #midi-config-box { display: none !important; }        
         
         #now-playing { font-weight: bold; margin-bottom: 8px; font-size: 1em; padding-right: 40px; }
         
@@ -107,6 +107,15 @@
         .btn-fill:active { background: rgba(233, 30, 99, 1); }
         .btn-ending { background: rgba(156, 39, 176, 0.8); }
         .btn-ending:active { background: rgba(156, 39, 176, 1); }
+
+        /* Painel de Configuração do Pedal M-Vave Chocolate Plus */
+        .midi-config-panel {
+            margin-top: 10px; background: rgba(30, 30, 50, 0.6);
+            border: 1px dashed rgba(0, 188, 212, 0.5); border-radius: 10px;
+            padding: 10px; font-size: 0.8rem; text-align: left; display: flex; flex-direction: column; gap: 5px;
+        }
+        .midi-config-header { color: #ff4; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .midi-status-badge { background: rgba(76, 175, 80, 0.3); color: #81c784; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; }
 
         #yt-player { 
             display: none; width: 100%; aspect-ratio: 16/9; border-radius: 10px; border: none; margin-top: 15px; 
@@ -259,6 +268,20 @@
             </div>
         </div>
 
+        <!-- Painel de Configuração do M-Vave Chocolate Plus (Exibido no Player) -->
+        <div id="midi-config-box" class="midi-config-panel">
+            <div class="midi-config-header">
+                <span>🦶 Pedal M-Vave Chocolate Plus (Atalhos)</span>
+                <span class="midi-status-badge" id="midi-status-text">Pronto / Ativo</span>
+            </div>
+            <div style="color: #bbb; line-height: 1.3;">
+                • <b>Botão 1 (Espaço / PageDown):</b> Play / Pause Loop<br>
+                • <b>Botão 2 (Tecla V):</b> Virada / Fill (Trk2)<br>
+                • <b>Botão 3 (Enter / F):</b> Finalização / Stop (Trk3)<br>
+                • <b>Botão 4 (PageUp / Esc):</b> Stop Geral
+            </div>
+        </div>
+
         <div id="multiplayerStemsBox" class="multiplayer-stems-box" style="display: none;">
             <div style="font-size: 0.8rem; color: #00bcd4; font-weight: bold; text-align: left;">🎛️ CANAIS EXTRAS:</div>
             <div id="stemsListContainer"></div>
@@ -309,7 +332,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         let GID_ATUAL = urlParams.get('gid') || '1960210650';
         
-        const CACHE_NAME = 'canto-eta-media-v13';
+        const CACHE_NAME = 'canto-eta-media-v14';
         let modoGerenciamentoAtivo = false;
         let currentSemitones = 0;
         let tomOriginalExtraido = null;
@@ -662,7 +685,6 @@
                 const id = cols[0]?.replace(/"/g, '') || ('item-'+index);
                 
                 let extraTracks = [];
-                // Coluna H (índice 7 = trk1), Coluna I (índice 8 = trk2), Coluna J (índice 9 = trk3)
                 if (cols[7] && cols[7].replace(/"/g, '').trim().startsWith('http')) {
                     extraTracks.push({ name: 'Trk1 (Loop)', url: cols[7].replace(/"/g, '').trim(), type: 'trk1' });
                 }
@@ -704,7 +726,6 @@
                 li.className = 'glass-panel';
                 li.dataset.id = item.id;
                 
-                // Valida se existe mídia principal (E) OU links nas colunas H, I, J
                 const temMediaPrincipal = item.media && item.media.length > 5;
                 const temStems = item.stems && item.stems.length > 0;
                 const temMidiaValida = temMediaPrincipal || temStems;
@@ -732,11 +753,14 @@
                         displayHTML = `<span class="interpreter">${item.cantor}</span><span class="song-title">${item.musica}</span>`;
                     }
 
+                    // CORREÇÃO: Passa codificado o JSON correto de stems para a função tocar
+                    let stemsStringEncoded = encodeURIComponent(JSON.stringify(item.stems));
+
                     let botoesAcao = `
                         <div class="action-buttons">
                             ${temMediaPrincipal && !ehYouTube && !ehGitHub ? `<button class="btn-github-upload" onclick="enviarItemParaGithub(this.closest('li'))" title="Enviar para o GitHub (Partitura)">🎼</button>` : ''}
                             ${temMediaPrincipal && !ehYouTube ? `<button class="btn-cache" data-url="${urlFinal}" onclick="toggleCache('${urlFinal}', this)">⬇️</button>` : ''}
-                            ${temMidiaValida ? `<button class="btn-play" onclick="tocar('${item.tipo}', '${item.media.replace(/'/g, "\\'")}', '${item.cantor.replace(/'/g, "\\'")}', '${item.musica.replace(/'/g, "\\'")}', '${encodeURIComponent(JSON.stringify(item.stems))}')">▶</button>` : ''}
+                            ${temMidiaValida ? `<button class="btn-play" onclick="tocar('${item.tipo}', '${item.media.replace(/'/g, "\\'")}','${item.cantor.replace(/'/g, "\\'")}','${item.musica.replace(/'/g, "\\'")}','${stemsStringEncoded}')">▶</button>` : ''}
                             <button class="btn-delete-sheet" onclick="deletarItemPlanilha(this.closest('li'))" title="Excluir">🗑️</button>
                         </div>
                     `;
@@ -804,6 +828,7 @@
                     const ctx = getAudioContext();
                     stemsData = [];
                     
+                    // Adiciona a mídia principal se houver na coluna E
                     if (temMediaPrincipal) {
                         const mainBuffer = await carregarBufferAudio(normalizarUrlMidia(media));
                         const mainGain = ctx.createGain();
@@ -811,6 +836,7 @@
                         stemsData.push({ name: 'Playback Principal', buffer: mainBuffer, gainNode: mainGain, isMuted: false, type: 'main' });
                     }
 
+                    // Adiciona os stems das colunas H, I, J (Trk1, Trk2, Trk3)
                     for (let i = 0; i < parsedStems.length; i++) {
                         const sUrl = normalizarUrlMidia(parsedStems[i].url);
                         const sBuffer = await carregarBufferAudio(sUrl);
@@ -823,7 +849,7 @@
                         masterDuration = stemsData[0].buffer.duration;
                         isMultiplayerActive = true;
 
-                        // Se NÃO tem coluna E, exibe o layout exclusivo de Loop/Stems nas colunas H,I,J
+                        // Se NÃO tem coluna E, exibe o layout exclusivo de Loops (Trk1, Trk2, Trk3)
                         if (!temMediaPrincipal) {
                             if (audioControlsGroup) audioControlsGroup.style.display = 'none';
                             if (loopOnlyControlsGroup) loopOnlyControlsGroup.style.display = 'block';
@@ -898,7 +924,6 @@
 
             const ctx = getAudioContext();
             
-            // Muta o loop momentaneamente
             stemsData.forEach(s => {
                 if (s.type === 'trk1' || s.type === 'main') {
                     s.gainNode.gain.value = 0;
@@ -914,7 +939,6 @@
             stemTrk2.gainNode.gain.value = 1;
             
             source.onended = () => {
-                // Restaura o loop ao terminar a virada
                 stemsData.forEach(s => {
                     if (s.type === 'trk1' || s.type === 'main') {
                         s.gainNode.gain.value = s.isMuted ? 0 : 1;
@@ -937,7 +961,6 @@
 
             const ctx = getAudioContext();
 
-            // Para o loop imediatamente
             stemsData.forEach(s => {
                 if (s.sourceNode && s.type !== 'trk3') {
                     try { s.sourceNode.stop(); } catch(e){}
