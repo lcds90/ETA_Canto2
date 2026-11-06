@@ -1,9 +1,9 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - Roberto !🎸🥁🎤!</title>
+    <title>Canto ETA - Roberto !!</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
@@ -56,9 +56,17 @@
         .btn-master-action {
             background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3);
             color: #fff; border-radius: 8px; padding: 10px 14px; font-weight: bold; cursor: pointer; font-size: 0.85em;
-            flex: 1; min-width: 110px; text-transform: uppercase;
+            flex: 1; min-width: 110px; text-transform: uppercase; position: relative;
         }
         .btn-master-action:active { background: rgba(255, 255, 255, 0.3); }
+
+        /* Estilo para destacar a letra do pedal físico como no design */
+        .pedal-badge {
+            position: absolute; bottom: 4px; right: 6px;
+            background: #ffeb3b; color: #000; font-size: 0.7rem;
+            padding: 1px 5px; border-radius: 4px; font-weight: 900;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
 
         .progress-container {
             display: flex; flex-direction: column; gap: 4px; margin-top: 10px; width: 100%;
@@ -97,13 +105,26 @@
         .btn-toggle-stem.on { background: #4caf50; color: #fff; }
         .btn-toggle-stem.off { background: #424242; color: #b0b0b0; }
 
+        /* Painel Dropdown do Pedal M-Vave Chocolate Plus */
         .midi-config-panel {
-            margin-top: 10px; background: rgba(30, 30, 50, 0.6);
-            border: 1px dashed rgba(0, 188, 212, 0.5); border-radius: 10px;
-            padding: 10px; font-size: 0.8rem; text-align: left; display: flex; flex-direction: column; gap: 5px;
+            margin-top: 10px; background: rgba(20, 20, 35, 0.9);
+            border: 1px solid rgba(0, 188, 212, 0.4); border-radius: 10px;
+            overflow: hidden; text-align: left; font-size: 0.8rem;
         }
-        .midi-config-header { color: #ff4; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .midi-config-header {
+            background: rgba(0, 188, 212, 0.2); padding: 8px 12px; color: #ff4; font-weight: bold;
+            display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;
+        }
+        .midi-config-content { padding: 10px; display: none; flex-direction: column; gap: 6px; }
+        .midi-config-content.open { display: flex; }
         .midi-status-badge { background: rgba(76, 175, 80, 0.3); color: #81c784; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; }
+        
+        /* Testador de Comando estilo BTK Studio */
+        .midi-tester-box {
+            margin-top: 8px; background: rgba(40, 120, 60, 0.3); border: 1px dashed rgba(76, 175, 80, 0.6);
+            border-radius: 6px; padding: 6px 10px; font-family: monospace; font-size: 0.75rem; color: #a5d6a7;
+            text-align: center;
+        }
 
         #yt-player { 
             display: none; width: 100%; aspect-ratio: 16/9; border-radius: 10px; border: none; margin-top: 15px; 
@@ -223,8 +244,8 @@
         <div id="audio-controls-group">
             <div class="master-controls-row">
                 <button class="btn-master-action" onclick="restartMedia()">↺ Início</button>
-                <button class="btn-master-action" id="btn-main-play" onclick="togglePlayPauseMaster()">▶ Play / Pause</button>
-                <button class="btn-master-action" onclick="dispararStopInteligente()" style="color: #ff6b6b;">■ Stop / Fim</button>
+                <button class="btn-master-action" id="btn-main-play" onclick="togglePlayPauseMaster()">▶ Play / Pause<span class="pedal-badge">A</span></button>
+                <button class="btn-master-action" onclick="dispararStopInteligente()" style="color: #ff6b6b;">■ Stop / Fim<span class="pedal-badge">D</span></button>
             </div>
 
             <div id="progress-panel" class="progress-container">
@@ -246,27 +267,36 @@
             </div>
         </div>
 
-        <!-- Player de Loops / Stems (Colunas H, I, J) com Botões Clicáveis -->
+        <!-- Player de Loops / Stems (Colunas H, I, J) com os 3 Botões de Play e Stop + Letras dos Pedais A, B, C, D -->
         <div id="loopOnlyControlsGroup" style="display: none; margin-top: 10px; flex-direction: column; gap: 8px;">
             <div style="font-size: 0.8rem; color: #ff4; font-weight: bold;">🎹 CONTROLE DE LOOPS & STEMS</div>
             <div class="master-controls-row">
-                <button class="btn-master-action" id="btn-loop-play" onclick="togglePlayPauseMaster()" style="background: #4caf50;">▶ Loop (Trk1)</button>
-                <button class="btn-master-action" onclick="dispararFillTrk2()" style="background: #e91e63;">🪘 Virada (Trk2)</button>
-                <button class="btn-master-action" onclick="dispararStopInteligente()" style="background: #f44336;">■ Stop / Fim</button>
+                <button class="btn-master-action" id="btn-loop-play" onclick="togglePlayPauseMaster()" style="background: #4caf50;">▶ Play Loop<span class="pedal-badge">B</span></button>
+                <button class="btn-master-action" onclick="dispararFillTrk2()" style="background: #e91e63;">🪘 Virada (Fill)<span class="pedal-badge">C</span></button>
+                <button class="btn-master-action" onclick="dispararStopInteligente()" style="background: #f44336;">■ Stop / Fim<span class="pedal-badge">D</span></button>
             </div>
         </div>
 
-        <!-- Painel informativo do Mapeamento do Chocolate Plus (Modo Keyboard B) -->
+        <!-- Janela com Dropdown para Instruções do Pedal + Testador de Comando (Estilo BTK Studio) -->
         <div id="midi-config-box" class="midi-config-panel">
-            <div class="midi-config-header">
+            <div class="midi-config-header" onclick="toggleDropdownMidi()">
                 <span>🦶 Pedal M-Vave Chocolate Plus (Modo Keyboard B)</span>
-                <span class="midi-status-badge" id="midi-status-text">Ativo</span>
+                <span style="display: flex; align-items: center; gap: 6px;">
+                    <span class="midi-status-badge">Ativo</span>
+                    <span id="dropdown-arrow">▼</span>
+                </span>
             </div>
-            <div style="color: #bbb; line-height: 1.3; text-align: left;">
-                • <b>Pedal A (PageDown):</b> Botão 1 / Play-Pause (Normal no link da coluna E)[cite: 8]<br>
-                • <b>Pedal B (PageUp):</b> Botão 2 / Play-Pause (No link da coluna H em Loop - Trk1)[cite: 8]<br>
-                • <b>Pedal C (Espaço):</b> Botão 3 / Virada / Fill (Trk2 - Muta e unmuta o trk1)[cite: 8]<br>
-                • <b>Pedal D (Enter):</b> Botão 4 / Stop Inteligente (Para o trk1 e Toca Trk3 até o final se houver)[cite: 8]
+            <div id="midi-dropdown-content" class="midi-config-content">
+                <div style="color: #bbb; line-height: 1.4;">
+                    • <b>Pedal A (PageDown):</b> Play-Pause (Normal no link da coluna E)<br>
+                    • <b>Pedal B (PageUp):</b> Play-Pause (No link da coluna H em Loop - Trk1)<br>
+                    • <b>Pedal C (Espaço):</b> Virada / Fill (Trk2 - Muta e unmuta o trk1)<br>
+                    • <b>Pedal D (Enter):</b> Stop Inteligente (Para o trk1 e Toca Trk3 até o final se houver)
+                </div>
+                <!-- Testador de Sinal Recebido igual ao seu modelo de referência -->
+                <div id="midi-tester-display" class="midi-tester-box">
+                    ✅ AGUARDANDO COMANDO DO PEDAL...
+                </div>
             </div>
         </div>
 
@@ -320,7 +350,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         let GID_ATUAL = urlParams.get('gid') || '1960210650';
         
-        const CACHE_NAME = 'canto-eta-media-v16';
+        const CACHE_NAME = 'canto-eta-media-v17';
         let modoGerenciamentoAtivo = false;
         let currentSemitones = 0;
         let tomOriginalExtraido = null;
@@ -400,6 +430,13 @@
             return url;
         }
 
+        function toggleDropdownMidi() {
+            const content = document.getElementById('midi-dropdown-content');
+            const arrow = document.getElementById('dropdown-arrow');
+            content.classList.toggle('open');
+            arrow.innerText = content.classList.contains('open') ? '▲' : '▼';
+        }
+
         function pararTonePlayer() {
             if (audioElementNativo) {
                 audioElementNativo.onerror = null;
@@ -450,8 +487,8 @@
             const btnLoop = document.getElementById('btn-loop-play');
             const btnFloat = document.getElementById('btn-pause-float');
             
-            if (btnMain) btnMain.innerText = texto;
-            if (btnLoop) btnLoop.innerText = texto === "⏸ Pausar" ? "⏸ Pausar Loop" : "▶ Loop (Trk1)";
+            if (btnMain) btnMain.innerText = texto === "⏸ Pausar" ? "⏸ Pausar" : "▶ Play / Pause";
+            if (btnLoop) btnLoop.innerText = texto === "⏸ Pausar" ? "⏸ Pausar Loop" : "▶ Play Loop";
             if (btnFloat) btnFloat.innerText = texto === "⏸ Pausar" ? "⏸ Pausar" : "▶ Play";
         }
 
@@ -471,7 +508,7 @@
             if (!audioElementNativo.paused) {
                 audioElementNativo.pause();
                 if (progressInterval) clearInterval(progressInterval);
-                atualizarBotoesPlayMaster("▶ Play / Pause");
+                atualizarBotoesPlayMaster("▶ Play");
             } else {
                 audioElementNativo.play().then(() => {
                     atualizarBotoesPlayMaster("⏸ Pausar");
@@ -877,7 +914,7 @@
                 
                 const source = ctx.createBufferSource();
                 source.buffer = stem.buffer;
-                source.loop = true; // Trk1 ou Principal em loop contínuo
+                source.loop = true; // Trk1 em Loop Contínuo
                 source.connect(stem.gainNode);
                 source.start(0, startOffset % stem.buffer.duration);
                 stem.sourceNode = source;
@@ -900,7 +937,7 @@
             if (progressInterval) clearInterval(progressInterval);
         }
 
-        // --- BOTÃO 3 (Espaço / Pedal C): VIRADA / FILL (Trk2) ---
+        // --- PEDAL C / BOTÃO 2: VIRADA / FILL (Trk2) ---
         function dispararFillTrk2() {
             if (!isPlaying) return;
             const stemTrk2 = stemsData.find(s => s.type === 'trk2');
@@ -934,7 +971,7 @@
             stemTrk2.sourceNode = source;
         }
 
-        // --- BOTÃO 4 (Enter / Pedal D): STOP INTELIGENTE (Para o trk1 e Toca Trk3 até o final se houver) ---
+        // --- PEDAL D / BOTÃO 4: STOP INTELIGENTE (Para trk1 e Toca Trk3 até o final se houver) ---
         function dispararStopInteligente() {
             if (!isPlaying && !audioElementNativo) {
                 stopAll();
@@ -988,26 +1025,37 @@
             }, 100);
         }
 
-        // --- MAPEAMENTO DOS PEDAIS DO CHOCOLATE PLUS (Keyboard B) ---
+        // --- MAPEAMENTO GLOBAL DOS PEDAIS DO CHOCOLATE PLUS (Keyboard B) & TESTADOR DE COMANDO ---
         document.addEventListener('keydown', (e) => {
-            const key = e.key.toLowerCase();
+            const key = e.key;
             const code = e.code;
+            const keyLower = key.toLowerCase();
 
-            if (['pagedown', 'pageup', 'space', 'enter'].includes(key) || ['PageDown', 'PageUp', 'Space', 'Enter'].includes(code)) {
+            // Atualiza o testador visual em tempo real (estilo BTK Studio)
+            const tester = document.getElementById('midi-tester-display');
+            if (tester) {
+                tester.innerHTML = `🟢 SINAL RECEBIDO! Tecla: "${key}" (code: ${code})`;
+                tester.style.borderColor = '#4caf50';
+                setTimeout(() => {
+                    tester.style.borderColor = 'rgba(76, 175, 80, 0.6)';
+                }, 1500);
+            }
+
+            if (['pagedown', 'pageup', 'space', 'enter'].includes(keyLower) || ['PageDown', 'PageUp', 'Space', 'Enter'].includes(code)) {
                 e.preventDefault();
             }
 
-            if (code === 'PageDown' || key === 'pagedown') {
-                // Pedal A (PageDown): Botão 1 / Play-Pause normal (Coluna E)
+            if (code === 'PageDown' || keyLower === 'pagedown') {
+                // Pedal A (PageDown): Play-Pause (Normal na Coluna E)
                 togglePlayPauseMaster();
-            } else if (code === 'PageUp' || key === 'pageup') {
-                // Pedal B (PageUp): Botão 2 / Play-Pause Loop (Coluna H - Trk1)
+            } else if (code === 'PageUp' || keyLower === 'pageup') {
+                // Pedal B (PageUp): Play-Pause Loop (Coluna H - Trk1)
                 togglePlayPauseMaster();
-            } else if (code === 'Space' || key === 'v') {
-                // Pedal C (Espaço): Botão 3 / Virada / Fill (Trk2)
+            } else if (code === 'Space' || keyLower === ' ' || keyLower === 'v') {
+                // Pedal C (Espaço): Virada / Fill (Trk2)
                 dispararFillTrk2();
-            } else if (code === 'Enter' || key === 'enter' || key === 'f') {
-                // Pedal D (Enter): Botão 4 / Stop Inteligente (Trk3 ou Stop)
+            } else if (code === 'Enter' || keyLower === 'enter' || keyLower === 'f') {
+                // Pedal D (Enter): Stop Inteligente (Trk3 ou Stop)
                 dispararStopInteligente();
             }
         });
