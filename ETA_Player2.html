@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - Roberto %!$!</title>
+    <title>Canto ETA - Roberto !🎤🎸🥁!</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
@@ -16,7 +16,7 @@
             background-image: url('image_6.png'); 
             background-size: cover; background-position: center;
             background-repeat: no-repeat; background-attachment: fixed;
-            padding-bottom: 120px; 
+            padding-bottom: 140px; 
             transition: background 0.3s;
         }
         body.modo-gerenciamento {
@@ -46,7 +46,7 @@
             box-sizing: border-box;
         }
         .player-minimized { resize: none; min-height: 45px; padding-bottom: 10px; }        
-        .player-minimized #yt-player, .player-minimized .pitch-control-box, .player-minimized .progress-container, .player-minimized .master-controls-row, .player-minimized .multiplayer-stems-box, .player-minimized #midi-config-box, .player-minimized #loop-pedals-row { display: none !important; }        
+        .player-minimized #yt-player, .player-minimized .pitch-control-box, .player-minimized .progress-container, .player-minimized .master-controls-row, .player-minimized #loop-pedals-row, .player-minimized #midi-config-box { display: none !important; }        
         
         #now-playing { font-weight: bold; margin-bottom: 8px; font-size: 1em; padding-right: 40px; }
         
@@ -56,7 +56,7 @@
         .btn-master-action {
             background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3);
             color: #fff; border-radius: 8px; padding: 10px 14px; font-weight: bold; cursor: pointer; font-size: 0.85em;
-            flex: 1; min-width: 110px; text-transform: uppercase; position: relative;
+            flex: 1; min-width: 100px; text-transform: uppercase; position: relative;
         }
         .btn-master-action:active { background: rgba(255, 255, 255, 0.3); }
 
@@ -90,12 +90,6 @@
         }
         .btn-pitch:active { background: rgba(255, 255, 255, 0.3); }
         #pitch-val-display { font-family: monospace; font-size: 0.9em; font-weight: bold; color: #00bcd4; min-width: 35px; text-align: center; }
-
-        .multiplayer-stems-box {
-            display: none; margin-top: 10px; background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(0, 188, 212, 0.3); border-radius: 10px;
-            padding: 10px; flex-direction: column; gap: 8px;
-        }
 
         /* Painel Dropdown do Pedal M-Vave Chocolate Plus */
         .midi-config-panel {
@@ -231,12 +225,12 @@
         <button class="toggle-player" id="btn-toggle" onclick="togglePlayer()">▼</button>
         <div id="now-playing">Selecione uma faixa</div>
         
-        <!-- Player Padrão Original (Coluna E) com Pedal A e D -->
+        <!-- Linha Superior: 3 Botões Principais (Início, Play, Stop) com Pedais A e D -->
         <div id="audio-controls-group">
             <div class="master-controls-row">
                 <button class="btn-master-action" onclick="restartMedia()">↺ Início</button>
-                <button class="btn-master-action" id="btn-main-play" onclick="togglePlayPauseMaster()">▶ Play / Pause<span class="pedal-badge">A</span></button>
-                <button class="btn-master-action" onclick="stopAll()" style="color: #ff6b6b;">■ Stop / Fim<span class="pedal-badge">D</span></button>
+                <button class="btn-master-action" id="btn-main-play" onclick="togglePlayPauseMaster()">▶ Play<span class="pedal-badge">A</span></button>
+                <button class="btn-master-action" onclick="stopAll()" style="color: #ff6b6b;">■ Stop<span class="pedal-badge">D</span></button>
             </div>
 
             <div id="progress-panel" class="progress-container">
@@ -258,13 +252,12 @@
             </div>
         </div>
 
-        <!-- Linha de Botões Extras para os Pedais B, C e D (Loops / Stems) -->
+        <!-- Linha Inferior: 3 Botões de Loop (Loop, Vira, Stop) com Pedais B, C e D -->
         <div id="loop-pedals-row" style="display: none; margin-top: 10px; flex-direction: column; gap: 8px;">
-            <div style="font-size: 0.8rem; color: #ff4; font-weight: bold;">🎹 CONTROLE DE LOOPS & STEMS</div>
             <div class="master-controls-row">
-                <button class="btn-master-action" id="btn-loop-play" onclick="togglePlayPauseMaster()" style="background: #4caf50;">▶ Play Loop<span class="pedal-badge">B</span></button>
-                <button class="btn-master-action" onclick="dispararFillTrk2()" style="background: #e91e63;">🪘 Virada (Fill)<span class="pedal-badge">C</span></button>
-                <button class="btn-master-action" onclick="dispararStopInteligente()" style="background: #f44336;">■ Stop / Fim<span class="pedal-badge">D</span></button>
+                <button class="btn-master-action" id="btn-loop-play" onclick="togglePlayPauseMaster()" style="background: #4caf50;">▶ Loop<span class="pedal-badge">B</span></button>
+                <button class="btn-master-action" onclick="dispararFillTrk2()" style="background: #e91e63;">🪘 Vira<span class="pedal-badge">C</span></button>
+                <button class="btn-master-action" onclick="dispararStopInteligente()" style="background: #f44336;">■ Stop<span class="pedal-badge">D</span></button>
             </div>
         </div>
 
@@ -280,19 +273,14 @@
             <div id="midi-dropdown-content" class="midi-config-content">
                 <div style="color: #bbb; line-height: 1.4;">
                     • <b>Pedal A (PageDown):</b> Play / Pause (Coluna E)<br>
-                    • <b>Pedal B (PageUp):</b> Play Loop (Coluna H - Trk1)<br>
-                    • <b>Pedal C (Espaço):</b> Virada / Fill (Trk2 - Muta e unmuta o trk1)<br>
-                    • <b>Pedal D (Enter):</b> Stop Inteligente (Para o trk1 e Toca Trk3 até o final se houver)
+                    • <b>Pedal B (PageUp):</b> Play Loop / Trk1 (Coluna H)<br>
+                    • <b>Pedal C (Espaço):</b> Vira / Fill / Trk2 (Coluna I)<br>
+                    • <b>Pedal D (Enter):</b> Stop Inteligente / Trk3 (Coluna J)
                 </div>
                 <div id="midi-tester-display" class="midi-tester-box">
                     ✅ AGUARDANDO COMANDO DO PEDAL...
                 </div>
             </div>
-        </div>
-
-        <div id="multiplayerStemsBox" class="multiplayer-stems-box" style="display: none;">
-            <div style="font-size: 0.8rem; color: #00bcd4; font-weight: bold; text-align: left;">🎛️ CANAIS EXTRAS:</div>
-            <div id="stemsListContainer"></div>
         </div>
 
         <iframe id="yt-player" allow="autoplay"></iframe>
@@ -340,10 +328,9 @@
         const urlParams = new URLSearchParams(window.location.search);
         let GID_ATUAL = urlParams.get('gid') || '1960210650';
         
-        const CACHE_NAME = 'canto-eta-media-v19';
+        const CACHE_NAME = 'canto-eta-media-v20';
         let modoGerenciamentoAtivo = false;
         let currentSemitones = 0;
-        let tomOriginalExtraido = null;
         let dadosGlobaisPlanilha = {};
 
         let audioCtx = null;
@@ -481,8 +468,8 @@
             const btnLoop = document.getElementById('btn-loop-play');
             const btnFloat = document.getElementById('btn-pause-float');
             
-            if (btnMain) btnMain.innerText = texto === "⏸ Pausar" ? "⏸ Pausar" : "▶ Play / Pause";
-            if (btnLoop) btnLoop.innerText = texto === "⏸ Pausar" ? "⏸ Pausar Loop" : "▶ Play Loop";
+            if (btnMain) btnMain.innerText = texto === "⏸ Pausar" ? "⏸ Pausar" : "▶ Play";
+            if (btnLoop) btnLoop.innerText = texto === "⏸ Pausar" ? "⏸ Pausar" : "▶ Loop";
             if (btnFloat) btnFloat.innerText = texto === "⏸ Pausar" ? "⏸ Pausar" : "▶ Play";
         }
 
@@ -797,12 +784,15 @@
                 const id = cols[0]?.replace(/"/g, '') || ('item-'+index);
                 
                 let extraTracks = [];
+                // Coluna H (índice 7) -> Trk1 (Loop)
                 if (cols[7] && cols[7].replace(/"/g, '').trim().startsWith('http')) {
                     extraTracks.push({ name: 'Trk1 (Loop)', url: cols[7].replace(/"/g, '').trim(), type: 'trk1' });
                 }
+                // Coluna I (índice 8) -> Trk2 (Vira / Fill)
                 if (cols[8] && cols[8].replace(/"/g, '').trim().startsWith('http')) {
                     extraTracks.push({ name: 'Trk2 (Fill)', url: cols[8].replace(/"/g, '').trim(), type: 'trk2' });
                 }
+                // Coluna J (índice 9) -> Trk3 (Fim)
                 if (cols[9] && cols[9].replace(/"/g, '').trim().startsWith('http')) {
                     extraTracks.push({ name: 'Trk3 (Fim)', url: cols[9].replace(/"/g, '').trim(), type: 'trk3' });
                 }
@@ -812,7 +802,7 @@
                     musica: cols[2]?.replace(/"/g, '') || '',
                     media: cols[3]?.replace(/"/g, '').trim() || '', // Coluna E
                     tipo: (cols[4]?.replace(/"/g, '') || '').toLowerCase().trim(),
-                    notes: cols[6]?.replace(/"/g, '') || '', // Coluna G (Anotações)
+                    notes: cols[6]?.replace(/"/g, '') || '', // CORREÇÃO: Coluna G (Anotações)
                     stems: extraTracks
                 };
             });
@@ -901,7 +891,6 @@
             const loopPedalsRow = document.getElementById('loop-pedals-row');
             const pitchPanel = document.getElementById('pitch-control-panel');
             const progressPanel = document.getElementById('progress-panel');
-            const multiplayerBox = document.getElementById('multiplayerStemsBox');
             
             const playerContainer = document.getElementById('main-player-container');
             if (playerContainer) playerContainer.classList.remove('player-minimized');
@@ -928,7 +917,6 @@
                 isMultiplayerActive = false;
                 if (audioControlsGroup) audioControlsGroup.style.display = 'block';
                 if (loopPedalsRow) loopPedalsRow.style.display = 'none';
-                if (multiplayerBox) multiplayerBox.style.display = 'none';
                 if (yt) {
                     yt.style.display = 'block';
                     let id = media.includes('v=') ? media.split('v=')[1].split('&')[0] : (media.includes('be/') ? media.split('be/')[1] : media);
@@ -936,11 +924,9 @@
                 }
                 if (nowPlaying) nowPlaying.innerHTML = `Tocando: <b>${musica}</b><br><small>${cantor}</small>`;
             } else if (temMediaPrincipal && ehGitHub) {
-                // Arquivo do GitHub com suporte a Pitch (Tone.js)
                 isMultiplayerActive = false;
                 if (audioControlsGroup) audioControlsGroup.style.display = 'block';
                 if (loopPedalsRow) loopPedalsRow.style.display = 'none';
-                if (multiplayerBox) multiplayerBox.style.display = 'none';
                 if (pitchPanel) pitchPanel.style.display = 'flex';
 
                 try {
@@ -955,7 +941,7 @@
                     tonePlayerNode = new Tone.Player({
                         url: buffer,
                         loop: false,
-                        onstop: () => { atualizarBotoesPlayMaster("▶ Play / Pause"); }
+                        onstop: () => { atualizarBotoesPlayMaster("▶ Play"); }
                     }).connect(tonePitchShift);
 
                     masterDuration = buffer.duration;
@@ -963,17 +949,15 @@
                     if (timeTotal) timeTotal.innerText = formatarTempo(masterDuration);
 
                     nowPlaying.innerHTML = `Pronto: <b>${musica}</b><br><small>${cantor}</small>`;
-                    atualizarBotoesPlayMaster("▶ Play / Pause");
+                    atualizarBotoesPlayMaster("▶ Play");
                 } catch(e) {
                     console.error("Erro Tone.js:", e);
                     alert("Erro ao carregar o player de áudio.");
                 }
             } else if (temMediaPrincipal) {
-                // Arquivos comuns (Dropbox, Drive, etc)
                 isMultiplayerActive = false;
                 if (audioControlsGroup) audioControlsGroup.style.display = 'block';
                 if (loopPedalsRow) loopPedalsRow.style.display = 'none';
-                if (multiplayerBox) multiplayerBox.style.display = 'none';
                 if (pitchPanel) pitchPanel.style.display = 'flex';
 
                 const urlNativa = normalizarUrlMidia(media);
@@ -987,7 +971,7 @@
                 };
 
                 nowPlaying.innerHTML = `Pronto: <b>${musica}</b><br><small>${cantor}</small>`;
-                atualizarBotoesPlayMaster("▶ Play / Pause");
+                atualizarBotoesPlayMaster("▶ Play");
             } else {
                 // Modo Loop / Multiplayer (Colunas H, I, J)
                 try {
@@ -1010,7 +994,7 @@
                         if (loopPedalsRow) loopPedalsRow.style.display = 'block';
 
                         nowPlaying.innerHTML = `Pronto (Loop): <b>${musica}</b><br><small>${cantor}</small>`;
-                        atualizarBotoesPlayMaster("▶ Play Loop");
+                        atualizarBotoesPlayMaster("▶ Loop");
                     }
                 } catch(err) {
                     console.error(err);
@@ -1061,11 +1045,11 @@
                 if (stem.sourceNode) { try { stem.sourceNode.stop(); } catch(e){} stem.sourceNode = null; }
             });
             isPlaying = false;
-            atualizarBotoesPlayMaster("▶ Play Loop");
+            atualizarBotoesPlayMaster("▶ Loop");
             if (progressInterval) clearInterval(progressInterval);
         }
 
-        // --- PEDAL C / BOTÃO 3: VIRADA / FILL (Trk2) ---
+        // --- PEDAL C / BOTÃO "VIRA": VIRADA / FILL (Trk2) ---
         function dispararFillTrk2() {
             if (!isPlaying || !isMultiplayerActive) return;
             const stemTrk2 = stemsData.find(s => s.type === 'trk2');
@@ -1099,7 +1083,7 @@
             stemTrk2.sourceNode = source;
         }
 
-        // --- PEDAL D / BOTÃO 4: STOP INTELIGENTE ---
+        // --- PEDAL D / BOTÃO "STOP": STOP INTELIGENTE (Trk3) ---
         function dispararStopInteligente() {
             if (!isPlaying && !audioElementNativo && !tonePlayerNode) {
                 stopAll();
@@ -1176,13 +1160,13 @@
                 // Pedal A (PageDown): Play / Pause (Coluna E)
                 togglePlayPauseMaster();
             } else if (code === 'PageUp' || keyLower === 'pageup') {
-                // Pedal B (PageUp): Play Loop (Coluna H - Trk1)
+                // Pedal B (PageUp): Play Loop / Trk1 (Coluna H)
                 togglePlayPauseMaster();
             } else if (code === 'Space' || keyLower === ' ' || keyLower === 'v') {
-                // Pedal C (Espaço): Virada / Fill (Trk2)
+                // Pedal C (Espaço): Vira / Fill / Trk2 (Coluna I)
                 dispararFillTrk2();
             } else if (code === 'Enter' || keyLower === 'enter' || keyLower === 'f') {
-                // Pedal D (Enter): Stop Inteligente (Trk3 ou Stop)
+                // Pedal D (Enter): Stop Inteligente / Trk3 (Coluna J)
                 dispararStopInteligente();
             }
         });
