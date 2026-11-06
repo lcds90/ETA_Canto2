@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - Roberto !novo!</title>
+    <title>Canto ETA - Roberto !!</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
@@ -328,12 +328,12 @@
         const urlParams = new URLSearchParams(window.location.search);
         let GID_ATUAL = urlParams.get('gid') || '1960210650';
         
-        const CACHE_NAME = 'canto-eta-media-v28';
+        const CACHE_NAME = 'canto-eta-media-v29';
         let modoGerenciamentoAtivo = false;
         let currentSemitones = 0;
         let tomOriginalExtraido = null;
         let dadosGlobaisPlanilha = {};
-        let itemIdAtualCarregado = null; // Controla se o item atual já está aberto/carregado
+        let itemIdAtualCarregado = null;
 
         const NOTAS_CROMATICAS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
         const NOTAS_FLAT_MAP = { "Db":"C#", "Eb":"D#", "Gb":"F#", "Ab":"G#", "Bb":"A#" };
@@ -671,7 +671,6 @@
             if (btnToggle) btnToggle.innerText = isMin ? '▼' : '✕';
         }
 
-        // --- FUNÇÃO DO DROPDOWN DO PEDAL CORRIGIDA ---
         function toggleDropdownMidi() {
             const content = document.getElementById('midi-dropdown-content');
             const arrow = document.getElementById('dropdown-arrow');
@@ -959,7 +958,6 @@
             const notasItem = elementoLi?.querySelector('.notes-field')?.innerText || "";
             tomOriginalExtraido = extrairTomDaString(notasItem) || extrairTomDaString(musica) || extrairTomDaString(cantor);
 
-            // Verifica se é o mesmo item já aberto/carregado para forçar reinício imediato ao topo
             const mesmoItem = (itemIdAtualCarregado === idItem);
             itemIdAtualCarregado = idItem;
 
@@ -977,7 +975,8 @@
             
             if (ehYouTube) {
                 isMultiplayerActive = false;
-                if (audioControlsGroup) audioControlsGroup.style.display = 'block';
+                // CORREÇÃO: Esconde controles de áudio nativo/pitch quando for YouTube
+                if (audioControlsGroup) audioControlsGroup.style.display = 'none';
                 if (loopPedalsRow) loopPedalsRow.style.display = 'none';
                 if (pitchPanel) pitchPanel.style.display = 'none';
                 if (yt) {
@@ -1012,7 +1011,12 @@
 
                     nowPlaying.innerHTML = `Pronto: <b>${musica}</b><br><small>${cantor}</small>`;
                     atualizarBotoesPlayMaster("▶ Play");
-                    restartMedia(); // Inicia e aponta para o início automaticamente
+                    
+                    // CORREÇÃO: Apenas posiciona no início sem forçar autoplay (evita bloqueio)
+                    const seekBar = document.getElementById('seek-bar');
+                    const timeCurrent = document.getElementById('time-current');
+                    if (seekBar) seekBar.value = 0;
+                    if (timeCurrent) timeCurrent.innerText = "00:00";
                 } catch(e) {
                     console.error("Erro Tone.js:", e);
                     alert("Erro ao carregar o player de áudio.");
@@ -1036,7 +1040,9 @@
 
                 nowPlaying.innerHTML = `Pronto: <b>${musica}</b><br><small>${cantor}</small>`;
                 atualizarBotoesPlayMaster("▶ Play");
-                restartMedia(); // Inicia e aponta para o início automaticamente
+                
+                // CORREÇÃO: Apenas carrega e aponta para o início (currentTime = 0), sem disparar play()
+                audioElementNativo.currentTime = 0;
             } else {
                 // Modo Loop / Multiplayer (Colunas H, I, J)
                 try {
@@ -1061,7 +1067,6 @@
 
                         nowPlaying.innerHTML = `Pronto (Loop): <b>${musica}</b><br><small>${cantor}</small>`;
                         atualizarBotoesPlayMaster("▶ Loop");
-                        restartMedia(); // Inicia e aponta para o início automaticamente
                     }
                 } catch(err) {
                     console.error(err);
@@ -1088,12 +1093,13 @@
             startTime = ctx.currentTime - startOffset;
 
             stemsData.forEach(stem => {
+                // CORREÇÃO: Garante que apenas o trk1 (Loop) toque em loop contínuo
                 if (stem.type === 'trk2' || stem.type === 'trk3') return;
                 if (stem.sourceNode) { try { stem.sourceNode.stop(); } catch(e){} }
                 
                 const source = ctx.createBufferSource();
                 source.buffer = stem.buffer;
-                source.loop = true; // Trk1 (Loop) em Loop Contínuo
+                source.loop = true; 
                 source.connect(stem.gainNode);
                 source.start(0, startOffset % stem.buffer.duration);
                 stem.sourceNode = source;
@@ -1126,7 +1132,7 @@
             
             stemsData.forEach(s => {
                 if (s.type === 'trk1' || s.type === 'main') {
-                    s.gainNode.gain.value = 0; // Muta o trk1 momentaneamente
+                    s.gainNode.gain.value = 0; 
                 }
             });
 
@@ -1141,7 +1147,7 @@
             source.onended = () => {
                 stemsData.forEach(s => {
                     if (s.type === 'trk1' || s.type === 'main') {
-                        s.gainNode.gain.value = s.isMuted ? 0 : 1; // Unmuta o trk1
+                        s.gainNode.gain.value = s.isMuted ? 0 : 1; 
                     }
                 });
             };
@@ -1245,16 +1251,12 @@
             }
 
             if (code === 'PageDown' || keyLower === 'pagedown') {
-                // Pedal A (PageDown): Play / Pause (Coluna E)
                 togglePlayPauseMaster();
             } else if (code === 'PageUp' || keyLower === 'pageup') {
-                // Pedal B (PageUp): Play Loop / Trk1 (Coluna H)
                 togglePlayLoop();
             } else if (code === 'Space' || keyLower === ' ' || keyLower === 'v') {
-                // Pedal C (Espaço): Vira / Trk2 (Coluna I)
                 dispararFillTrk2();
             } else if (code === 'Enter' || keyLower === 'enter' || keyLower === 'f') {
-                // Pedal D (Enter): Stop / Trk3 (Coluna J)
                 dispararStopInteligente();
             }
         });
