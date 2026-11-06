@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - Roberto ! !</title>
+    <title>Canto ETA - Roberto !🎸🥁🎤!</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
@@ -51,11 +51,12 @@
         #now-playing { font-weight: bold; margin-bottom: 8px; font-size: 1em; padding-right: 40px; }
         
         .master-controls-row {
-            display: flex; gap: 10px; margin-top: 10px; justify-content: center; align-items: center;
+            display: flex; gap: 8px; margin-top: 10px; justify-content: center; align-items: center; flex-wrap: wrap;
         }
         .btn-master-action {
             background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3);
-            color: #fff; border-radius: 8px; padding: 8px 15px; font-weight: bold; cursor: pointer; font-size: 0.9em;
+            color: #fff; border-radius: 8px; padding: 10px 14px; font-weight: bold; cursor: pointer; font-size: 0.85em;
+            flex: 1; min-width: 110px; text-transform: uppercase;
         }
         .btn-master-action:active { background: rgba(255, 255, 255, 0.3); }
 
@@ -96,19 +97,6 @@
         .btn-toggle-stem.on { background: #4caf50; color: #fff; }
         .btn-toggle-stem.off { background: #424242; color: #b0b0b0; }
 
-        .triggers-row {
-            display: flex; gap: 8px; margin-top: 4px;
-        }
-        .btn-trigger {
-            flex: 1; padding: 10px; font-size: 0.85em; font-weight: bold; border-radius: 8px; border: none; cursor: pointer;
-            text-transform: uppercase; color: #fff;
-        }
-        .btn-fill { background: rgba(233, 30, 99, 0.8); }
-        .btn-fill:active { background: rgba(233, 30, 99, 1); }
-        .btn-ending { background: rgba(156, 39, 176, 0.8); }
-        .btn-ending:active { background: rgba(156, 39, 176, 1); }
-
-        /* Painel de Configuração do Pedal M-Vave Chocolate Plus */
         .midi-config-panel {
             margin-top: 10px; background: rgba(30, 30, 50, 0.6);
             border: 1px dashed rgba(0, 188, 212, 0.5); border-radius: 10px;
@@ -231,12 +219,12 @@
         <button class="toggle-player" id="btn-toggle" onclick="togglePlayer()">▼</button>
         <div id="now-playing">Selecione uma faixa</div>
         
-        <!-- Controles Master para Player Padrão -->
+        <!-- Player Padrão (Coluna E) -->
         <div id="audio-controls-group">
             <div class="master-controls-row">
                 <button class="btn-master-action" onclick="restartMedia()">↺ Início</button>
-                <button class="btn-master-action" id="btn-main-play" onclick="togglePlayPauseMaster()">▶ Play</button>
-                <button class="btn-master-action" onclick="stopAll()" style="color: #ff6b6b;">■ Stop</button>
+                <button class="btn-master-action" id="btn-main-play" onclick="togglePlayPauseMaster()">▶ Play / Pause</button>
+                <button class="btn-master-action" onclick="dispararStopInteligente()" style="color: #ff6b6b;">■ Stop / Fim</button>
             </div>
 
             <div id="progress-panel" class="progress-container">
@@ -258,27 +246,27 @@
             </div>
         </div>
 
-        <!-- Layout Alternativo Exclusivo para Músicas com Apenas Loops (Sem Coluna E) -->
+        <!-- Player de Loops / Stems (Colunas H, I, J) com Botões Clicáveis -->
         <div id="loopOnlyControlsGroup" style="display: none; margin-top: 10px; flex-direction: column; gap: 8px;">
             <div style="font-size: 0.8rem; color: #ff4; font-weight: bold;">🎹 CONTROLE DE LOOPS & STEMS</div>
             <div class="master-controls-row">
-                <button class="btn-master-action" id="btn-loop-play" onclick="togglePlayPauseMaster()" style="background: #4caf50; flex: 1;">▶ Play Loop (Trk1)</button>
-                <button class="btn-master-action" onclick="dispararFillTrk2()" style="background: #e91e63; flex: 1;">🪘 Virada (Trk2)</button>
-                <button class="btn-master-action" onclick="stopAll()" style="background: #f44336; flex: 1;">■ Stop / Fim</button>
+                <button class="btn-master-action" id="btn-loop-play" onclick="togglePlayPauseMaster()" style="background: #4caf50;">▶ Loop (Trk1)</button>
+                <button class="btn-master-action" onclick="dispararFillTrk2()" style="background: #e91e63;">🪘 Virada (Trk2)</button>
+                <button class="btn-master-action" onclick="dispararStopInteligente()" style="background: #f44336;">■ Stop / Fim</button>
             </div>
         </div>
 
-        <!-- Painel de Configuração do M-Vave Chocolate Plus (Exibido no Player) -->
+        <!-- Painel informativo do Mapeamento do Chocolate Plus (Modo Keyboard B) -->
         <div id="midi-config-box" class="midi-config-panel">
             <div class="midi-config-header">
-                <span>🦶 Pedal M-Vave Chocolate Plus (Atalhos)</span>
-                <span class="midi-status-badge" id="midi-status-text">Pronto / Ativo</span>
+                <span>🦶 Pedal M-Vave Chocolate Plus (Modo Keyboard B)</span>
+                <span class="midi-status-badge" id="midi-status-text">Ativo</span>
             </div>
-            <div style="color: #bbb; line-height: 1.3;">
-                • <b>Botão 1 (Espaço / PageDown):</b> Play / Pause Loop<br>
-                • <b>Botão 2 (Tecla V):</b> Virada / Fill (Trk2)<br>
-                • <b>Botão 3 (Enter / F):</b> Finalização / Stop (Trk3)<br>
-                • <b>Botão 4 (PageUp / Esc):</b> Stop Geral
+            <div style="color: #bbb; line-height: 1.3; text-align: left;">
+                • <b>Pedal A (PageDown):</b> Botão 1 / Play-Pause (Normal no link da coluna E)[cite: 8]<br>
+                • <b>Pedal B (PageUp):</b> Botão 2 / Play-Pause (No link da coluna H em Loop - Trk1)[cite: 8]<br>
+                • <b>Pedal C (Espaço):</b> Botão 3 / Virada / Fill (Trk2 - Muta e unmuta o trk1)[cite: 8]<br>
+                • <b>Pedal D (Enter):</b> Botão 4 / Stop Inteligente (Para o trk1 e Toca Trk3 até o final se houver)[cite: 8]
             </div>
         </div>
 
@@ -315,7 +303,7 @@
     <div id="float-ctrl" class="floating-controls">
         <button class="btn-large btn-restart" onclick="restartMedia()">↺ Início</button>
         <button id="btn-pause-float" class="btn-large btn-pause" onclick="togglePlayPauseMaster()">⏸ Pausar</button>
-        <button class="btn-large btn-stop" onclick="stopAll()">■ Stop</button>
+        <button class="btn-large btn-stop" onclick="dispararStopInteligente()">■ Stop</button>
     </div>
 
     <div class="search-container">
@@ -332,7 +320,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         let GID_ATUAL = urlParams.get('gid') || '1960210650';
         
-        const CACHE_NAME = 'canto-eta-media-v14';
+        const CACHE_NAME = 'canto-eta-media-v16';
         let modoGerenciamentoAtivo = false;
         let currentSemitones = 0;
         let tomOriginalExtraido = null;
@@ -463,7 +451,7 @@
             const btnFloat = document.getElementById('btn-pause-float');
             
             if (btnMain) btnMain.innerText = texto;
-            if (btnLoop) btnLoop.innerText = texto === "⏸ Pausar" ? "⏸ Pausar Loop" : "▶ Play Loop (Trk1)";
+            if (btnLoop) btnLoop.innerText = texto === "⏸ Pausar" ? "⏸ Pausar Loop" : "▶ Loop (Trk1)";
             if (btnFloat) btnFloat.innerText = texto === "⏸ Pausar" ? "⏸ Pausar" : "▶ Play";
         }
 
@@ -483,7 +471,7 @@
             if (!audioElementNativo.paused) {
                 audioElementNativo.pause();
                 if (progressInterval) clearInterval(progressInterval);
-                atualizarBotoesPlayMaster("▶ Play");
+                atualizarBotoesPlayMaster("▶ Play / Pause");
             } else {
                 audioElementNativo.play().then(() => {
                     atualizarBotoesPlayMaster("⏸ Pausar");
@@ -698,7 +686,7 @@
                 dadosMap[id] = {
                     id: id, cantor: cols[1]?.replace(/"/g, '') || '',
                     musica: cols[2]?.replace(/"/g, '') || '',
-                    media: cols[3]?.replace(/"/g, '').trim() || '', // Coluna E (Playback principal)
+                    media: cols[3]?.replace(/"/g, '').trim() || '',
                     tipo: (cols[4]?.replace(/"/g, '') || '').toLowerCase().trim(),
                     notes: cols[6]?.replace(/"/g, '') || '',
                     stems: extraTracks
@@ -753,7 +741,6 @@
                         displayHTML = `<span class="interpreter">${item.cantor}</span><span class="song-title">${item.musica}</span>`;
                     }
 
-                    // CORREÇÃO: Passa codificado o JSON correto de stems para a função tocar
                     let stemsStringEncoded = encodeURIComponent(JSON.stringify(item.stems));
 
                     let botoesAcao = `
@@ -828,7 +815,6 @@
                     const ctx = getAudioContext();
                     stemsData = [];
                     
-                    // Adiciona a mídia principal se houver na coluna E
                     if (temMediaPrincipal) {
                         const mainBuffer = await carregarBufferAudio(normalizarUrlMidia(media));
                         const mainGain = ctx.createGain();
@@ -836,7 +822,6 @@
                         stemsData.push({ name: 'Playback Principal', buffer: mainBuffer, gainNode: mainGain, isMuted: false, type: 'main' });
                     }
 
-                    // Adiciona os stems das colunas H, I, J (Trk1, Trk2, Trk3)
                     for (let i = 0; i < parsedStems.length; i++) {
                         const sUrl = normalizarUrlMidia(parsedStems[i].url);
                         const sBuffer = await carregarBufferAudio(sUrl);
@@ -849,7 +834,6 @@
                         masterDuration = stemsData[0].buffer.duration;
                         isMultiplayerActive = true;
 
-                        // Se NÃO tem coluna E, exibe o layout exclusivo de Loops (Trk1, Trk2, Trk3)
                         if (!temMediaPrincipal) {
                             if (audioControlsGroup) audioControlsGroup.style.display = 'none';
                             if (loopOnlyControlsGroup) loopOnlyControlsGroup.style.display = 'block';
@@ -860,7 +844,7 @@
                             if (progressPanel) progressPanel.style.display = 'flex';
                         }
 
-                        nowPlaying.innerHTML = `Pronto (Multiplayer): <b>${musica}</b><br><small>${cantor} (Clique em Play)</small>`;
+                        nowPlaying.innerHTML = `Pronto: <b>${musica}</b><br><small>${cantor} (Pressione Pedal A ou B)</small>`;
                         atualizarBotoesPlayMaster("▶ Play");
                     }
                 } catch(err) {
@@ -888,12 +872,12 @@
             startTime = ctx.currentTime - startOffset;
 
             stemsData.forEach(stem => {
-                if (stem.type === 'trk2' || stem.type === 'trk3') return; // Trk2 e Trk3 só rodam nos botões específicos
+                if (stem.type === 'trk2' || stem.type === 'trk3') return;
                 if (stem.sourceNode) { try { stem.sourceNode.stop(); } catch(e){} }
                 
                 const source = ctx.createBufferSource();
                 source.buffer = stem.buffer;
-                source.loop = true; // Trk1 ou Principal rodam em loop contínuo
+                source.loop = true; // Trk1 ou Principal em loop contínuo
                 source.connect(stem.gainNode);
                 source.start(0, startOffset % stem.buffer.duration);
                 stem.sourceNode = source;
@@ -916,7 +900,7 @@
             if (progressInterval) clearInterval(progressInterval);
         }
 
-        // --- TRK2: FILL / VIRADA ---
+        // --- BOTÃO 3 (Espaço / Pedal C): VIRADA / FILL (Trk2) ---
         function dispararFillTrk2() {
             if (!isPlaying) return;
             const stemTrk2 = stemsData.find(s => s.type === 'trk2');
@@ -926,7 +910,7 @@
             
             stemsData.forEach(s => {
                 if (s.type === 'trk1' || s.type === 'main') {
-                    s.gainNode.gain.value = 0;
+                    s.gainNode.gain.value = 0; // Muta o trk1 momentaneamente
                 }
             });
 
@@ -941,7 +925,7 @@
             source.onended = () => {
                 stemsData.forEach(s => {
                     if (s.type === 'trk1' || s.type === 'main') {
-                        s.gainNode.gain.value = s.isMuted ? 0 : 1;
+                        s.gainNode.gain.value = s.isMuted ? 0 : 1; // Unmuta o trk1
                     }
                 });
             };
@@ -950,38 +934,41 @@
             stemTrk2.sourceNode = source;
         }
 
-        // --- TRK3: FINALIZAÇÃO ---
-        function dispararEndingTrk3() {
-            if (!isPlaying) return;
-            const stemTrk3 = stemsData.find(s => s.type === 'trk3');
-            if (!stemTrk3) {
+        // --- BOTÃO 4 (Enter / Pedal D): STOP INTELIGENTE (Para o trk1 e Toca Trk3 até o final se houver) ---
+        function dispararStopInteligente() {
+            if (!isPlaying && !audioElementNativo) {
                 stopAll();
                 return;
             }
 
-            const ctx = getAudioContext();
+            const stemTrk3 = stemsData.find(s => s.type === 'trk3');
+            
+            if (stemTrk3 && isPlaying) {
+                const ctx = getAudioContext();
+                stemsData.forEach(s => {
+                    if (s.sourceNode && s.type !== 'trk3') {
+                        try { s.sourceNode.stop(); } catch(e){}
+                        s.sourceNode = null;
+                    }
+                });
 
-            stemsData.forEach(s => {
-                if (s.sourceNode && s.type !== 'trk3') {
-                    try { s.sourceNode.stop(); } catch(e){}
-                    s.sourceNode = null;
-                }
-            });
+                if (stemTrk3.sourceNode) { try { stemTrk3.sourceNode.stop(); } catch(e){} }
 
-            if (stemTrk3.sourceNode) { try { stemTrk3.sourceNode.stop(); } catch(e){} }
+                const source = ctx.createBufferSource();
+                source.buffer = stemTrk3.buffer;
+                source.loop = false;
+                source.connect(stemTrk3.gainNode);
+                stemTrk3.gainNode.gain.value = 1;
 
-            const source = ctx.createBufferSource();
-            source.buffer = stemTrk3.buffer;
-            source.loop = false;
-            source.connect(stemTrk3.gainNode);
-            stemTrk3.gainNode.gain.value = 1;
+                source.onended = () => {
+                    stopAll();
+                };
 
-            source.onended = () => {
+                source.start(0);
+                stemTrk3.sourceNode = source;
+            } else {
                 stopAll();
-            };
-
-            source.start(0);
-            stemTrk3.sourceNode = source;
+            }
         }
 
         function iniciarMonitoramentoMultiplayer() {
@@ -1001,20 +988,27 @@
             }, 100);
         }
 
+        // --- MAPEAMENTO DOS PEDAIS DO CHOCOLATE PLUS (Keyboard B) ---
         document.addEventListener('keydown', (e) => {
             const key = e.key.toLowerCase();
-            if ([' ', 'pagedown', 'pageup', 'enter', 'v', 'f'].includes(key)) {
+            const code = e.code;
+
+            if (['pagedown', 'pageup', 'space', 'enter'].includes(key) || ['PageDown', 'PageUp', 'Space', 'Enter'].includes(code)) {
                 e.preventDefault();
             }
 
-            if (key === ' ' || key === 'pagedown') {
+            if (code === 'PageDown' || key === 'pagedown') {
+                // Pedal A (PageDown): Botão 1 / Play-Pause normal (Coluna E)
                 togglePlayPauseMaster();
-            } else if (key === 'pageup' || key === 'escape') {
-                stopAll();
-            } else if (key === 'v') {
+            } else if (code === 'PageUp' || key === 'pageup') {
+                // Pedal B (PageUp): Botão 2 / Play-Pause Loop (Coluna H - Trk1)
+                togglePlayPauseMaster();
+            } else if (code === 'Space' || key === 'v') {
+                // Pedal C (Espaço): Botão 3 / Virada / Fill (Trk2)
                 dispararFillTrk2();
-            } else if (key === 'enter' || key === 'f') {
-                dispararEndingTrk3();
+            } else if (code === 'Enter' || key === 'enter' || key === 'f') {
+                // Pedal D (Enter): Botão 4 / Stop Inteligente (Trk3 ou Stop)
+                dispararStopInteligente();
             }
         });
 
