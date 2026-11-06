@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - Roberto !!</title>
+    <title>Canto ETA - Roberto !🎤🎸🥁!</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
@@ -225,7 +225,7 @@
         <button class="toggle-player" id="btn-toggle" onclick="togglePlayer()">▼</button>
         <div id="now-playing">Selecione uma faixa</div>
         
-        <!-- LINHA SUPERIOR (3 Botões Originais para Coluna E) -->
+        <!-- LINHA SUPERIOR: Botões Originais (Início, Play, Stop) com Pedais A e D -->
         <div id="audio-controls-group">
             <div class="master-controls-row">
                 <button class="btn-master-action" onclick="restartMedia()">↺ Início</button>
@@ -252,8 +252,8 @@
             </div>
         </div>
 
-        <!-- LINHA INFERIOR (3 Botões Novos para Loops e Stems - Colunas H, I, J) -->
-        <div id="loop-pedals-row" style="margin-top: 10px; flex-direction: column; gap: 8px;">
+        <!-- LINHA INFERIOR: Botões para Loops e Pedais B, C e D -->
+        <div id="loop-pedals-row" style="display: none; margin-top: 10px; flex-direction: column; gap: 8px;">
             <div class="master-controls-row">
                 <button class="btn-master-action" id="btn-loop-play" onclick="togglePlayLoop()" style="background: #4caf50;">▶ Loop<span class="pedal-badge">B</span></button>
                 <button class="btn-master-action" onclick="dispararFillTrk2()" style="background: #e91e63;">🪘 Vira<span class="pedal-badge">C</span></button>
@@ -273,9 +273,9 @@
             <div id="midi-dropdown-content" class="midi-config-content">
                 <div style="color: #bbb; line-height: 1.4;">
                     • <b>Pedal A (PageDown):</b> Play / Pause (Coluna E)<br>
-                    • <b>Pedal B (PageUp):</b> Play Loop / Trk1 (Coluna H)[cite: 12]<br>
-                    • <b>Pedal C (Espaço):</b> Vira / Fill / Trk2 (Coluna I)[cite: 12]<br>
-                    • <b>Pedal D (Enter):</b> Stop Inteligente / Trk3 (Coluna J)[cite: 12]
+                    • <b>Pedal B (PageUp):</b> Play Loop / Trk1 (Coluna H)<br>
+                    • <b>Pedal C (Espaço):</b> Vira / Fill / Trk2 (Coluna I)<br>
+                    • <b>Pedal D (Enter):</b> Stop Inteligente / Trk3 (Coluna J)
                 </div>
                 <div id="midi-tester-display" class="midi-tester-box">
                     ✅ AGUARDANDO COMANDO DO PEDAL...
@@ -308,6 +308,12 @@
         </div>
     </div>
 
+    <div id="float-ctrl" class="floating-controls">
+        <button class="btn-large btn-restart" onclick="restartMedia()">↺ Início</button>
+        <button id="btn-pause-float" class="btn-large btn-pause" onclick="togglePlayPauseMaster()">⏸ Pausar</button>
+        <button class="btn-large btn-stop" onclick="stopAll()">■ Stop</button>
+    </div>
+
     <div class="search-container">
         <input type="text" id="search-input" placeholder="🔍 Buscar música ou intérprete..." oninput="filtrarLista()">
         <button class="clear-search" id="btn-clear" onclick="limparBusca()">✕</button>
@@ -322,28 +328,19 @@
         const urlParams = new URLSearchParams(window.location.search);
         let GID_ATUAL = urlParams.get('gid') || '1960210650';
         
-        const CACHE_NAME = 'canto-eta-media-v23';
+        const CACHE_NAME = 'canto-eta-media-v25';
         let modoGerenciamentoAtivo = false;
         let currentSemitones = 0;
+        let tomOriginalExtraido = null;
         let dadosGlobaisPlanilha = {};
 
-        let audioCtx = null;
-        function getAudioContext() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            return audioCtx;
-        }
-
-        let tonePlayerNode = null;
-        let tonePitchShift = null;
-        let audioElementNativo = null;
-        let stemsData = [];
-        let isMultiplayerActive = false;
-        let isPlaying = false;
-        let startTime = 0;
-        let startOffset = 0;
-        let masterDuration = 0;
-        let progressInterval = null;
+        const NOTAS_CROMATICAS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+        const NOTAS_FLAT_MAP = { "Db":"C#", "Eb":"D#", "Gb":"F#", "Ab":"G#", "Bb":"A#" };
+        
+        const MAPA_EXTENSO = {
+            'do': 'C', 'dó': 'C', 're': 'D', 'ré': 'D', 'mi': 'E',
+            'fa': 'F', 'fá': 'F', 'sol': 'G', 'la': 'A', 'lá': 'A', 'si': 'B'
+        };
 
         const MAPA_NOMES_DIAS = {
             '1960210650': 'DOMINGO', '1517164028': 'SEGUNDA', '216102701': 'TERÇA',
@@ -387,6 +384,58 @@
             return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         }
 
+        function extrairTomDaString(texto) {
+            if (!texto) return null;
+            let textoLower = texto.toLowerCase();
+            for (let nomeExtenso in MAPA_EXTENSO) {
+                let regexExtenso = new RegExp(`\\b${nomeExtenso}\\s*(menor|m)?\\b`, 'i');
+                if (regexExtenso.test(textoLower)) {
+                    let match = textoLower.match(regexExtenso);
+                    let notaCifra = MAPA_EXTENSO[nomeExtenso];
+                    let ehMenor = (match[1] && match[1].startsWith('m')) ? 'm' : '';
+                    return notaCifra + ehMenor;
+                }
+            }
+            const regexCifra = /\b([A-G][#b]?m?)\b/;
+            const matchCifra = texto.match(regexCifra);
+            if (matchCifra) {
+                let nota = matchCifra[1];
+                let notaBase = nota.charAt(0).toUpperCase();
+                let acidente = (nota.length > 1 && (nota[1] === '#' || nota[1] === 'b')) ? nota[1] : '';
+                let menor = nota.toLowerCase().endsWith('m') ? 'm' : '';
+                let notaFull = notaBase + acidente;
+                if (NOTAS_FLAT_MAP[notaFull]) notaFull = NOTAS_FLAT_MAP[notaFull];
+                return notaFull + menor;
+            }
+            return null;
+        }
+
+        function transporNota(notaComTipo, semitones) {
+            if (!notaComTipo) return "--";
+            let menor = notaComTipo.endsWith('m') ? 'm' : '';
+            let notaApenas = menor ? notaComTipo.slice(0, -1) : notaComTipo;
+            let idx = NOTAS_CROMATICAS.indexOf(notaApenas);
+            if (idx === -1) return notaComTipo;
+            let novoIdx = (idx + semitones) % 12;
+            if (novoIdx < 0) novoIdx += 12;
+            return NOTAS_CROMATICAS[novoIdx] + menor;
+        }
+
+        function atualizarDisplayPitch() {
+            const valDisplay = document.getElementById('pitch-val-display');
+            const keyLabel = document.getElementById('pitch-key-label');
+            const txtSemitons = (currentSemitones > 0 ? `+${currentSemitones}` : currentSemitones) + " st";
+            if (valDisplay) valDisplay.innerText = txtSemitons;
+            if (keyLabel) {
+                if (tomOriginalExtraido) {
+                    const tomTransposto = transporNota(tomOriginalExtraido, currentSemitones);
+                    keyLabel.innerText = currentSemitones === 0 ? `🎵 Tom: ${tomTransposto}` : `🎵 Tom: ${tomTransposto} (Orig: ${tomOriginalExtraido}, ${txtSemitons})`;
+                } else {
+                    keyLabel.innerText = `🎵 Tom: ${txtSemitons}`;
+                }
+            }
+        }
+
         function normalizarUrlMidia(media) {
             if (!media) return '';
             let url = media.trim();
@@ -401,24 +450,39 @@
             return url;
         }
 
-        function toggleDropdownMidi() {
-            const content = document.getElementById('midi-dropdown-content');
-            const arrow = document.getElementById('dropdown-arrow');
-            content.classList.toggle('open');
-            arrow.innerText = content.classList.contains('open') ? '▲' : '▼';
+        let audioCtx = null;
+        function getAudioContext() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            return audioCtx;
         }
 
+        let audioElementNativo = null;
+        let tonePitchShift = null;
+        let tonePlayerNode = null;
+        let stemsData = [];
+        let isMultiplayerActive = false;
+        let isPlaying = false;
+        let startTime = 0;
+        let startOffset = 0;
+        let masterDuration = 0;
+        let progressInterval = null;
+
         function pararTonePlayer() {
-            if (tonePlayerNode) {
-                try { tonePlayerNode.stop(); tonePlayerNode.disconnect(); } catch(e){}
-                tonePlayerNode = null;
-            }
             if (audioElementNativo) {
                 audioElementNativo.onerror = null;
                 audioElementNativo.onloadedmetadata = null;
                 audioElementNativo.pause();
                 audioElementNativo.src = "";
                 audioElementNativo = null;
+            }
+            if (tonePitchShift) {
+                try { tonePitchShift.dispose(); } catch(e){}
+                tonePitchShift = null;
+            }
+            if (tonePlayerNode) {
+                try { tonePlayerNode.disconnect(); } catch(e){}
+                tonePlayerNode = null;
             }
             stemsData.forEach(stem => {
                 if (stem.sourceNode) {
@@ -435,9 +499,20 @@
 
         function stopAll() {
             const yt = document.getElementById('yt-player');
+            const floatCtrl = document.getElementById('float-ctrl');
+            if (floatCtrl) floatCtrl.style.display = 'none';
+            
+            const audioControlsGroup = document.getElementById('audio-controls-group');
+            const loopPedalsRow = document.getElementById('loop-pedals-row');
+            if (audioControlsGroup) audioControlsGroup.style.display = 'block';
+            if (loopPedalsRow) loopPedalsRow.style.display = 'none';
+
             if (yt) { yt.src = ""; yt.style.display = 'none'; }
             pararTonePlayer();
+            currentSemitones = 0;
+            tomOriginalExtraido = null;
             startOffset = 0;
+            atualizarDisplayPitch();
             
             const mainContainer = document.getElementById('main-player-container');
             if (mainContainer) mainContainer.classList.add('player-minimized');
@@ -454,12 +529,13 @@
         function atualizarBotoesPlayMaster(texto) {
             const btnMain = document.getElementById('btn-main-play');
             const btnLoop = document.getElementById('btn-loop-play');
+            const btnFloat = document.getElementById('btn-pause-float');
             
             if (btnMain) btnMain.innerText = texto === "⏸ Pausar" ? "⏸ Pausar" : "▶ Play";
             if (btnLoop) btnLoop.innerText = texto === "⏸ Pausar" ? "⏸ Pausar" : "▶ Loop";
+            if (btnFloat) btnFloat.innerText = texto === "⏸ Pausar" ? "⏸ Pausar" : "▶ Play";
         }
 
-        // --- PLAY PRINCIPAL (Coluna E / GitHub / Nativo) ---
         async function togglePlayPauseMaster() {
             if (isMultiplayerActive) {
                 togglePlayLoop();
@@ -510,7 +586,6 @@
             }
         }
 
-        // --- PLAY LOOP (Trk1 - Coluna H) ---
         function togglePlayLoop() {
             if (stemsData.length === 0) return;
             if (!isPlaying) {
@@ -518,41 +593,6 @@
             } else {
                 pauseMultiplayer();
             }
-        }
-
-        function iniciarMonitoramentoTone() {
-            if (progressInterval) clearInterval(progressInterval);
-            progressInterval = setInterval(() => {
-                if (!isPlaying || !tonePlayerNode || !tonePlayerNode.buffer) return;
-                const ctx = getAudioContext();
-                const duracao = tonePlayerNode.buffer.duration;
-                const currentPos = (ctx.currentTime - startTime) % duracao;
-
-                const seekBar = document.getElementById('seek-bar');
-                const timeCurrent = document.getElementById('time-current');
-                const timeTotal = document.getElementById('time-total');
-
-                if (seekBar) seekBar.value = (currentPos / duracao) * 100;
-                if (timeCurrent) timeCurrent.innerText = formatarTempo(currentPos);
-                if (timeTotal) timeTotal.innerText = formatarTempo(duracao);
-            }, 100);
-        }
-
-        function iniciarMonitoramentoProgressoNativo() {
-            if (progressInterval) clearInterval(progressInterval);
-            progressInterval = setInterval(() => {
-                if (!audioElementNativo || audioElementNativo.paused) return;
-                const currentTime = audioElementNativo.currentTime;
-                const duration = audioElementNativo.duration || 0;
-
-                const seekBar = document.getElementById('seek-bar');
-                const timeCurrent = document.getElementById('time-current');
-                const timeTotal = document.getElementById('time-total');
-
-                if (seekBar && duration > 0) seekBar.value = (currentTime / duration) * 100;
-                if (timeCurrent) timeCurrent.innerText = formatarTempo(currentTime);
-                if (timeTotal) timeTotal.innerText = formatarTempo(duration);
-            }, 250);
         }
 
         function restartMedia() {
@@ -604,17 +644,20 @@
         }
 
         function alterarPitch(delta) {
-            currentSemitones += delta;
-            if (tonePitchShift) tonePitchShift.pitch = currentSemitones;
-            const disp = document.getElementById('pitch-val-display');
-            if (disp) disp.innerText = currentSemitones + " st";
+            const novoValor = currentSemitones + delta;
+            if (novoValor >= -3 && novoValor <= 3) {
+                currentSemitones = novoValor;
+                atualizarDisplayPitch();
+                if (tonePitchShift) tonePitchShift.pitch = currentSemitones;
+            }
         }
 
         function resetarPitch() {
-            currentSemitones = 0;
-            if (tonePitchShift) tonePitchShift.pitch = 0;
-            const disp = document.getElementById('pitch-val-display');
-            if (disp) disp.innerText = "0 st";
+            if (currentSemitones !== 0) {
+                currentSemitones = 0;
+                atualizarDisplayPitch();
+                if (tonePitchShift) tonePitchShift.pitch = 0;
+            }
         }
 
         function mudarLista(novoGid) { GID_ATUAL = novoGid; carregar(); }
@@ -775,31 +818,32 @@
             if (!lista) return;
             const linhas = texto.split('\n').map(l => l.trim()).filter(l => l);
             let dadosMap = {};
+            
             linhas.slice(1).forEach((linha, index) => {
                 const cols = inlineSplitCSV(linha);
                 const id = cols[0]?.replace(/"/g, '') || ('item-'+index);
                 
                 let extraTracks = [];
-                // Coluna H (índice 7) -> Trk1 (Loop)[cite: 12]
+                // Coluna H (índice 7) -> Trk1 (Loop)
                 if (cols[7] && cols[7].replace(/"/g, '').trim().startsWith('http')) {
                     extraTracks.push({ name: 'Trk1 (Loop)', url: cols[7].replace(/"/g, '').trim(), type: 'trk1' });
                 }
-                // Coluna I (índice 8) -> Trk2 (Vira / Fill)[cite: 12]
+                // Coluna I (índice 8) -> Trk2 (Vira / Fill)
                 if (cols[8] && cols[8].replace(/"/g, '').trim().startsWith('http')) {
                     extraTracks.push({ name: 'Trk2 (Fill)', url: cols[8].replace(/"/g, '').trim(), type: 'trk2' });
                 }
-                // Coluna J (índice 9) -> Trk3 (Fim)[cite: 12]
+                // Coluna J (índice 9) -> Trk3 (Fim)
                 if (cols[9] && cols[9].replace(/"/g, '').trim().startsWith('http')) {
                     extraTracks.push({ name: 'Trk3 (Fim)', url: cols[9].replace(/"/g, '').trim(), type: 'trk3' });
                 }
 
                 dadosMap[id] = {
                     id: id, 
-                    cantor: cols[2]?.replace(/"/g, '') || '', // Coluna C: Aluno[cite: 12]
-                    musica: cols[3]?.replace(/"/g, '') || '', // Coluna D: Musica[cite: 12]
-                    media: cols[4]?.replace(/"/g, '').trim() || '', // Coluna E: Link[cite: 12]
-                    tipo: (cols[5]?.replace(/"/g, '') || '').toLowerCase().trim(), // Coluna F: Tipo[cite: 12]
-                    notes: cols[6]?.replace(/"/g, '') || '', // Coluna G: Anotações[cite: 12]
+                    cantor: cols[2]?.replace(/"/g, '') || '', // Coluna C: Aluno
+                    musica: cols[3]?.replace(/"/g, '') || '', // Coluna D: Musica
+                    media: cols[4]?.replace(/"/g, '').trim() || '', // Coluna E: Link
+                    tipo: (cols[5]?.replace(/"/g, '') || '').toLowerCase().trim(), // Coluna F: Tipo
+                    notes: cols[6]?.replace(/"/g, '') || '', // Coluna G: Anotações
                     stems: extraTracks
                 };
             });
@@ -858,7 +902,7 @@
                         <div class="action-buttons">
                             ${temMediaPrincipal && !ehYouTube && !ehGitHub ? `<button class="btn-github-upload" onclick="enviarItemParaGithub(this.closest('li'))" title="Enviar para o GitHub (Partitura)">🎼</button>` : ''}
                             ${temMediaPrincipal && !ehYouTube ? `<button class="btn-cache" data-url="${urlFinal}" onclick="toggleCache('${urlFinal}', this)">⬇️</button>` : ''}
-                            ${temMidiaValida ? `<button class="btn-play" onclick="tocar('${item.tipo}', '${item.media.replace(/'/g, "\\'")}','${item.cantor.replace(/'/g, "\\'")}','${item.musica.replace(/'/g, "\\'")}','${stemsStringEncoded}')">▶</button>` : ''}
+                            ${temMidiaValida ? `<button class="btn-play" onclick="tocar('${item.tipo}', '${item.media.replace(/'/g, "\\'")}','${item.cantor.replace(/'/g, "\\'")}','${item.musica.replace(/'/g, "\\'")}','${stemsStringEncoded}', this.closest('li'))">▶</button>` : ''}
                             <button class="btn-delete-sheet" onclick="deletarItemPlanilha(this.closest('li'))" title="Excluir">🗑️</button>
                         </div>
                     `;
@@ -882,8 +926,10 @@
             atualizarStatusBotoesCache();
         }
 
-        async function tocar(tipo, media, cantor, musica, stemsEncoded) {
+        async function tocar(tipo, media, cantor, musica, stemsEncoded, elementoLi) {
             const yt = document.getElementById('yt-player');
+            const audioControlsGroup = document.getElementById('audio-controls-group');
+            const loopPedalsRow = document.getElementById('loop-pedals-row');
             const pitchPanel = document.getElementById('pitch-control-panel');
             
             const playerContainer = document.getElementById('main-player-container');
@@ -897,8 +943,13 @@
             
             const floatCtrl = document.getElementById('float-ctrl');
             if (floatCtrl) floatCtrl.style.display = 'flex';
+            
+            const notasItem = elementoLi?.querySelector('.notes-field')?.innerText || "";
+            tomOriginalExtraido = extrairTomDaString(notasItem) || extrairTomDaString(musica) || extrairTomDaString(cantor);
 
             pararTonePlayer();
+            currentSemitones = 0;
+            atualizarDisplayPitch();
             
             let parsedStems = [];
             try { parsedStems = JSON.parse(decodeURIComponent(stemsEncoded)); } catch(e){}
@@ -909,15 +960,19 @@
             
             if (ehYouTube) {
                 isMultiplayerActive = false;
+                if (audioControlsGroup) audioControlsGroup.style.display = 'block';
+                if (loopPedalsRow) loopPedalsRow.style.display = 'none';
                 if (pitchPanel) pitchPanel.style.display = 'none';
                 if (yt) {
                     yt.style.display = 'block';
                     let id = media.includes('v=') ? media.split('v=')[1].split('&')[0] : (media.includes('be/') ? media.split('be/')[1] : media);
                     yt.src = `https://www.youtube.com/embed/${id}?autoplay=0`;
                 }
-                if (nowPlaying) nowPlaying.innerHTML = `Pronto: <b>${musica}</b><br><small>${cantor}</small>`;
+                if (nowPlaying) nowPlaying.innerHTML = `Tocando: <b>${musica}</b><br><small>${cantor}</small>`;
             } else if (temMediaPrincipal && ehGitHub) {
                 isMultiplayerActive = false;
+                if (audioControlsGroup) audioControlsGroup.style.display = 'block';
+                if (loopPedalsRow) loopPedalsRow.style.display = 'none';
                 if (pitchPanel) pitchPanel.style.display = 'flex';
 
                 try {
@@ -946,6 +1001,8 @@
                 }
             } else if (temMediaPrincipal) {
                 isMultiplayerActive = false;
+                if (audioControlsGroup) audioControlsGroup.style.display = 'block';
+                if (loopPedalsRow) loopPedalsRow.style.display = 'none';
                 if (pitchPanel) pitchPanel.style.display = 'flex';
 
                 const urlNativa = normalizarUrlMidia(media);
@@ -962,7 +1019,7 @@
                 nowPlaying.innerHTML = `Pronto: <b>${musica}</b><br><small>${cantor}</small>`;
                 atualizarBotoesPlayMaster("▶ Play");
             } else {
-                // Modo Loop / Multiplayer (Colunas H, I, J)[cite: 12]
+                // Modo Loop / Multiplayer (Colunas H, I, J)
                 try {
                     const ctx = getAudioContext();
                     stemsData = [];
@@ -978,6 +1035,9 @@
                     if (stemsData.length > 0) {
                         masterDuration = stemsData[0].buffer.duration;
                         isMultiplayerActive = true;
+
+                        if (audioControlsGroup) audioControlsGroup.style.display = 'none';
+                        if (loopPedalsRow) loopPedalsRow.style.display = 'block';
                         if (pitchPanel) pitchPanel.style.display = 'none';
 
                         nowPlaying.innerHTML = `Pronto (Loop): <b>${musica}</b><br><small>${cantor}</small>`;
@@ -1036,7 +1096,7 @@
             if (progressInterval) clearInterval(progressInterval);
         }
 
-        // --- BOTÃO / PEDAL C: VIRA / TRK2 (Coluna I)[cite: 12] ---
+        // --- BOTÃO / PEDAL C: VIRA / TRK2 (Coluna I) ---
         function dispararFillTrk2() {
             if (!isMultiplayerActive) return;
             const stemTrk2 = stemsData.find(s => s.type === 'trk2');
@@ -1070,7 +1130,7 @@
             stemTrk2.sourceNode = source;
         }
 
-        // --- BOTÃO / PEDAL D: STOP INTELIGENTE / TRK3 (Coluna J) OU STOP GERAL[cite: 12] ---
+        // --- BOTÃO / PEDAL D: STOP INTELIGENTE / TRK3 (Coluna J) OU STOP GERAL ---
         function dispararStopInteligente() {
             if (!isPlaying && !audioElementNativo && !tonePlayerNode) {
                 stopAll();
@@ -1124,6 +1184,27 @@
             }, 100);
         }
 
+        function iniciarMonitoramentoProgressoNativo() {
+            if (progressInterval) clearInterval(progressInterval);
+            progressInterval = setInterval(() => {
+                if (audioElementNativo && !audioElementNativo.paused) {
+                    const duracaoTotal = audioElementNativo.duration || 0;
+                    const tempoAtual = audioElementNativo.currentTime || 0;
+                    
+                    const seekBar = document.getElementById('seek-bar');
+                    const timeCurrent = document.getElementById('time-current');
+                    
+                    if (seekBar && duracaoTotal > 0) seekBar.value = (tempoAtual / duracaoTotal) * 100;
+                    if (timeCurrent) timeCurrent.innerText = formatarTempo(tempoAtual);
+
+                    if (tempoAtual >= duracaoTotal) {
+                        clearInterval(progressInterval);
+                        atualizarBotoesPlayMaster("▶ Play");
+                    }
+                }
+            }, 200);
+        }
+
         // --- MAPEAMENTO DOS PEDAIS DO CHOCOLATE PLUS (Modo Keyboard B) & TESTADOR ---
         document.addEventListener('keydown', (e) => {
             const key = e.key;
@@ -1144,16 +1225,16 @@
             }
 
             if (code === 'PageDown' || keyLower === 'pagedown') {
-                // Pedal A (PageDown): Play / Pause (Coluna E)[cite: 12]
+                // Pedal A (PageDown): Play / Pause (Coluna E)
                 togglePlayPauseMaster();
             } else if (code === 'PageUp' || keyLower === 'pageup') {
-                // Pedal B (PageUp): Play Loop / Trk1 (Coluna H)[cite: 12]
+                // Pedal B (PageUp): Play Loop / Trk1 (Coluna H)
                 togglePlayLoop();
             } else if (code === 'Space' || keyLower === ' ' || keyLower === 'v') {
-                // Pedal C (Espaço): Vira / Trk2 (Coluna I)[cite: 12]
+                // Pedal C (Espaço): Vira / Trk2 (Coluna I)
                 dispararFillTrk2();
             } else if (code === 'Enter' || keyLower === 'enter' || keyLower === 'f') {
-                // Pedal D (Enter): Stop / Trk3 (Coluna J)[cite: 12]
+                // Pedal D (Enter): Stop / Trk3 (Coluna J)
                 dispararStopInteligente();
             }
         });
