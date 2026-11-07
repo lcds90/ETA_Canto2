@@ -581,7 +581,7 @@
                 if (!isPlayingMulti || masterDurationMulti === 0) return;
                 const timeLeft = masterDurationMulti - activeTrack.currentTime;
 
-                if (timeLeft <= 0.5 && !triggeredNext) {
+                if (timeLeft <= 0.05 && !triggeredNext) {
                     triggeredNext = true;
                     standbyTrack.currentTime = 0;
                     standbyTrack.play().catch(e => {});
