@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - Roberto !!</title>
+    <title>Canto ETA - Roberto !corrigido!</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
@@ -280,7 +280,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         let GID_ATUAL = urlParams.get('gid') || '1960210650';
         
-        const CACHE_NAME = 'canto-eta-media-v39';
+        const CACHE_NAME = 'canto-eta-media-v40';
         let modoGerenciamentoAtivo = false;
         let currentSemitones = 0;
         let tomOriginalExtraido = null;
@@ -643,6 +643,7 @@
             }, 100);
         }
 
+        // CARREGAMENTO DIRETO E BLINDADO DO BUFFER DO GITHUB (SEM CACHE STORAGE)
         async function carregarBufferAudio(url) {
             const ctx = Tone.context;
             const response = await fetch(url);
@@ -823,15 +824,12 @@
             }
         }
 
-        // Função auxiliar para gerenciar cache múltiplo de stems do GitHub
         async function toggleCacheMulti(stemsJsonEncoded, btnElement) {
             try {
                 let stems = JSON.parse(decodeURIComponent(stemsJsonEncoded));
                 if (stems.length === 0) return;
                 
                 const cache = await caches.open(CACHE_NAME);
-                
-                // Verifica se o primeiro já está em cache para decidir se baixa ou apaga todos
                 const primeiroUrl = normalizarUrlMidia(stems[0].url);
                 const jaEmCache = await cache.match(primeiroUrl);
 
@@ -1040,7 +1038,6 @@
 
                     let stemsStringEncoded = encodeURIComponent(JSON.stringify(item.stems));
 
-                    // Botão de cache: se tem coluna E normal, usa toggleCache. Se for multiplayer (stems do GitHub), usa toggleCacheMulti.
                     let botaoCacheHTML = '';
                     if (temMediaPrincipal && !ehYouTube) {
                         botaoCacheHTML = `<button class="btn-cache" data-url="${urlFinal}" onclick="toggleCache('${urlFinal}', this)">⬇️</button>`;
