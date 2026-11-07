@@ -399,7 +399,7 @@
         return await ctx.decodeAudioData(arrayBuffer);
     }
 
-    async function inicializarEstudio() {
+async function inicializarEstudio() {
         loadConfigs();
         if (!stemsEncoded) {
             toastMessage.textContent = 'Nenhum stem fornecido.';
@@ -412,25 +412,48 @@
             stemsContainer.innerHTML = '';
             stemsData = [];
 
-            // Mapeamento exato: 
-            // 0 -> H (Trk1 Loop)
-            // 1 -> I (Fill 1)
-            // 2 -> J (Fill 2)
-            // 3 -> K (Fill 3)
-            // 4 -> L (Trk3 Fim / Stop)
+            // Zera os buffers antes de carregar
+            fillBuffers = { 1: null, 2: null, 3: null };
+            fillGainNodes = { 1: null, 2: null, 3: null };
+            endingBuffer = null;
+
             for (let i = 0; i < rawStems.length; i++) {
                 let trackUrl = '';
                 let trackName = '';
 
                 if (typeof rawStems[i] === 'object' && rawStems[i] !== null) {
                     trackUrl = rawStems[i].url;
-                    trackName = rawStems[i].name || (`Track ${i+1}`);
+                    trackName = rawStems[i].name || '';
                 } else {
                     trackUrl = rawStems[i];
-                    trackName = i === 0 ? 'Loop (Trk1)' : i === 1 ? 'Fill 1' : i === 2 ? 'Fill 2' : i === 3 ? 'Fill 3' : 'Fim (Stop)';
+                    trackName = '';
                 }
 
                 if (!trackUrl || trackUrl.length < 5) continue;
+
+                // Descobre inteligentemente o tipo pelo nome do arquivo na URL
+                const urlLower = trackUrl.toLowerCase();
+                let detectedType = '';
+                
+                if (urlLower.includes('-loop') || urlLower.includes('-trk1')) {
+                    detectedType = 'loop';
+                    trackName = 'Loop Principal';
+                } else if (urlLower.includes('-fill1') || urlLower.includes('-trk2')) {
+                    detectedType = 'fill1';
+                    trackName = 'Fill 1';
+                } else if (urlLower.includes('-fill2')) {
+                    detectedType = 'fill2';
+                    trackName = 'Fill 2';
+                } else if (urlLower.includes('-fill3') || urlLower.includes('-trk3')) {
+                    detectedType = 'fill3';
+                    trackName = 'Fill 3';
+                } else if (urlLower.includes('-fim') || urlLower.includes('-stop')) {
+                    detectedType = 'ending';
+                    trackName = 'Fim (Stop)';
+                } else {
+                    // Fallback pela ordem caso não tenha sufixo claro
+                    detectedType = i === 0 ? 'loop' : i === 1 ? 'fill1' : i === 2 ? 'fill2' : i === 3 ? 'fill3' : 'ending';
+                }
 
                 toastMessage.textContent = `Baixando ${trackName}...`;
                 const buffer = await carregarAudioBuffer(trackUrl);
@@ -438,8 +461,7 @@
                 gainNode.gain.value = 1;
                 gainNode.connect(ctx.destination);
 
-                if (i === 0) {
-                    // Coluna H: Loop Principal
+                if (detectedType === 'loop') {
                     stemsData.push({ name: trackName, buffer: buffer, gainNode: gainNode, sourceNode: null, type: 'trk1' });
 
                     const row = document.createElement('div');
@@ -457,17 +479,19 @@
                     };
                     row.appendChild(toggleBtn);
                     stemsContainer.appendChild(row);
-                } else if (i >= 1 && i <= 3) {
-                    // Colunas I, J, K: Fills 1, 2 e 3
-                    const fillIdx = i;
-                    fillBuffers[fillIdx] = buffer;
-                    fillGainNodes[fillIdx] = gainNode;
-                    
-                    if (fillIdx === 1) btnFill1.style.display = 'block';
-                    if (fillIdx === 2) btnFill2.style.display = 'block';
-                    if (fillIdx === 3) btnFill3.style.display = 'block';
-                } else if (i >= 4) {
-                    // Coluna L: Finalização (Stop)
+                } else if (detectedType === 'fill1') {
+                    fillBuffers[1] = buffer;
+                    fillGainNodes[1] = gainNode;
+                    btnFill1.style.display = 'block';
+                } else if (detectedType === 'fill2') {
+                    fillBuffers[2] = buffer;
+                    fillGainNodes[2] = gainNode;
+                    btnFill2.style.display = 'block';
+                } else if (detectedType === 'fill3') {
+                    fillBuffers[3] = buffer;
+                    fillGainNodes[3] = gainNode;
+                    btnFill3.style.display = 'block';
+                } else if (detectedType === 'ending') {
                     endingBuffer = buffer;
                     endingGainNode = gainNode;
                 }
