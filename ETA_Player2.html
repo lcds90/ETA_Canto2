@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - Roberto novo</title>
+    <title>Canto ETA - Roberto !!</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
@@ -280,7 +280,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         let GID_ATUAL = urlParams.get('gid') || '1960210650';
         
-        const CACHE_NAME = 'canto-eta-media-v37';
+        const CACHE_NAME = 'canto-eta-media-v39';
         let modoGerenciamentoAtivo = false;
         let currentSemitones = 0;
         let tomOriginalExtraido = null;
@@ -643,16 +643,10 @@
             }, 100);
         }
 
-        // CARREGAMENTO DOS BUFFERS DO GITHUB VIA TONE.BUFFER (OU FETCH SEGURO)
         async function carregarBufferAudio(url) {
             const ctx = Tone.context;
-            const cache = await caches.open(CACHE_NAME);
-            let response = await cache.match(url);
-            if (!response) {
-                response = await fetch(url);
-                if (!response.ok) throw new Error(`Falha ao buscar arquivo do GitHub (${response.status}): ${url}`);
-                await cache.put(url, response.clone());
-            }
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`Falha ao buscar arquivo do GitHub (${response.status}): ${url}`);
             const arrayBuffer = await response.arrayBuffer();
             return await ctx.decodeAudioData(arrayBuffer);
         }
@@ -829,14 +823,65 @@
             }
         }
 
+        // Função auxiliar para gerenciar cache múltiplo de stems do GitHub
+        async function toggleCacheMulti(stemsJsonEncoded, btnElement) {
+            try {
+                let stems = JSON.parse(decodeURIComponent(stemsJsonEncoded));
+                if (stems.length === 0) return;
+                
+                const cache = await caches.open(CACHE_NAME);
+                
+                // Verifica se o primeiro já está em cache para decidir se baixa ou apaga todos
+                const primeiroUrl = normalizarUrlMidia(stems[0].url);
+                const jaEmCache = await cache.match(primeiroUrl);
+
+                if (jaEmCache) {
+                    for (let stem of stems) {
+                        let u = normalizarUrlMidia(stem.url);
+                        await cache.delete(u);
+                    }
+                    btnElement.innerText = '⬇️';
+                    btnElement.classList.remove('cached');
+                } else {
+                    btnElement.innerText = '⏳';
+                    for (let stem of stems) {
+                        let u = normalizarUrlMidia(stem.url);
+                        let res = await fetch(u);
+                        if (res.ok) {
+                            await cache.put(u, res);
+                        }
+                    }
+                    btnElement.innerText = '🗑️';
+                    btnElement.classList.add('cached');
+                }
+            } catch (error) {
+                console.error("Erro no cache múltiplo:", error);
+                btnElement.innerText = '⬇️';
+                alert("Não foi possível gerenciar o cache dos stems.");
+            }
+        }
+
         async function atualizarStatusBotoesCache() {
             const botoes = document.querySelectorAll('.btn-cache');
             const cache = await caches.open(CACHE_NAME);
             for (let btn of botoes) {
                 const url = btn.dataset.url;
+                const stemsEncoded = btn.dataset.stems;
+                
                 if (url && await cache.match(url)) {
                     btn.innerText = '🗑️';
                     btn.classList.add('cached');
+                } else if (stemsEncoded) {
+                    try {
+                        let stems = JSON.parse(decodeURIComponent(stemsEncoded));
+                        if (stems.length > 0) {
+                            let primeiroUrl = normalizarUrlMidia(stems[0].url);
+                            if (await cache.match(primeiroUrl)) {
+                                btn.innerText = '🗑️';
+                                btn.classList.add('cached');
+                            }
+                        }
+                    } catch(e){}
                 }
             }
         }
@@ -848,12 +893,23 @@
                 const cache = await caches.open(CACHE_NAME);
                 for (let btn of botoes) {
                     const url = btn.dataset.url;
-                    if (!url) continue;
+                    const stemsEncoded = btn.dataset.stems;
                     btn.innerText = '⏳';
+                    
                     try {
-                        const res = await fetch(url);
-                        if (res.ok) { await cache.put(url, res); btn.innerText = '🗑️'; btn.classList.add('cached'); }
-                        else { btn.innerText = '⬇️'; }
+                        if (url) {
+                            const res = await fetch(url);
+                            if (res.ok) { await cache.put(url, res); }
+                        } else if (stemsEncoded) {
+                            let stems = JSON.parse(decodeURIComponent(stemsEncoded));
+                            for (let stem of stems) {
+                                let u = normalizarUrlMidia(stem.url);
+                                let res = await fetch(u);
+                                if (res.ok) { await cache.put(u, res); }
+                            }
+                        }
+                        btn.innerText = '🗑️';
+                        btn.classList.add('cached');
                     } catch(e) { btn.innerText = '⬇️'; }
                 }
                 alert("Downloads concluídos!");
@@ -866,8 +922,19 @@
             if (confirm("Deseja apagar as mídias da memória local?")) {
                 const cache = await caches.open(CACHE_NAME);
                 for (let btn of botoes) {
-                    await cache.delete(btn.dataset.url);
-                    btn.innerText = '⬇️'; btn.classList.remove('cached');
+                    const url = btn.dataset.url;
+                    const stemsEncoded = btn.dataset.stems;
+                    
+                    if (url) {
+                        await cache.delete(url);
+                    } else if (stemsEncoded) {
+                        let stems = JSON.parse(decodeURIComponent(stemsEncoded));
+                        for (let stem of stems) {
+                            await cache.delete(normalizarUrlMidia(stem.url));
+                        }
+                    }
+                    btn.innerText = '⬇️'; 
+                    btn.classList.remove('cached');
                 }
                 alert("Removido com sucesso!");
             }
@@ -949,7 +1016,7 @@
                 const temMidiaValida = temMediaPrincipal || temStems;
                 
                 const primeiraMidiaValida = temMediaPrincipal ? item.media : (temStems ? item.stems[0].url : '');
-                const urlFinal = normalizarUrlMidia(primeiraMidiaValida);
+                const urlFinal = temMediaPrincipal ? normalizarUrlMidia(primeiraMidiaValida) : '';
                 li.dataset.media = urlFinal;
 
                 if (item.tipo === 'separador') {
@@ -973,10 +1040,18 @@
 
                     let stemsStringEncoded = encodeURIComponent(JSON.stringify(item.stems));
 
+                    // Botão de cache: se tem coluna E normal, usa toggleCache. Se for multiplayer (stems do GitHub), usa toggleCacheMulti.
+                    let botaoCacheHTML = '';
+                    if (temMediaPrincipal && !ehYouTube) {
+                        botaoCacheHTML = `<button class="btn-cache" data-url="${urlFinal}" onclick="toggleCache('${urlFinal}', this)">⬇️</button>`;
+                    } else if (!temMediaPrincipal && temStems) {
+                        botaoCacheHTML = `<button class="btn-cache" data-stems="${stemsStringEncoded}" onclick="toggleCacheMulti('${stemsStringEncoded}', this)">⬇️</button>`;
+                    }
+
                     let botoesAcao = `
                         <div class="action-buttons">
                             ${temMediaPrincipal && !ehYouTube && !ehGitHub ? `<button class="btn-github-upload" onclick="enviarItemParaGithub(this.closest('li'))" title="Enviar para o GitHub (Partitura)">🎼</button>` : ''}
-                            ${temMediaPrincipal && !ehYouTube ? `<button class="btn-cache" data-url="${urlFinal}" onclick="toggleCache('${urlFinal}', this)">⬇️</button>` : ''}
+                            ${botaoCacheHTML}
                             ${temMidiaValida ? `<button class="btn-play" onclick="tocar('${item.media.replace(/'/g, "\\'")}', '${item.cantor.replace(/'/g, "\\'")}', '${item.musica.replace(/'/g, "\\'")}', '${stemsStringEncoded}', this.closest('li'))">▶</button>` : ''}
                             <button class="btn-delete-sheet" onclick="deletarItemPlanilha(this.closest('li'))" title="Excluir">🗑️</button>
                         </div>
