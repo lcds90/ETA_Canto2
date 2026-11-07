@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - Roberto !!</title>
+    <title>Canto ETA - Roberto !🎤🎸🥁!</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
@@ -51,11 +51,12 @@
         #now-playing { font-weight: bold; margin-bottom: 8px; font-size: 1em; padding-right: 40px; }
         
         .master-controls-row {
-            display: flex; gap: 10px; margin-top: 10px; justify-content: center; align-items: center;
+            display: flex; gap: 10px; margin-top: 10px; justify-content: center; align-items: center; flex-wrap: wrap;
         }
         .btn-master-action {
             background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3);
-            color: #fff; border-radius: 8px; padding: 8px 15px; font-weight: bold; cursor: pointer; font-size: 0.9em;
+            color: #fff; border-radius: 8px; padding: 10px 14px; font-weight: bold; cursor: pointer; font-size: 0.85em;
+            flex: 1; min-width: 95px; text-transform: uppercase; position: relative;
         }
         .btn-master-action:active { background: rgba(255, 255, 255, 0.3); }
 
@@ -93,18 +94,6 @@
             border-radius: 50%; width: 32px; height: 32px; cursor: pointer;
             display: flex; align-items: center; justify-content: center; font-weight: bold;
         }
-        .floating-controls {
-            position: fixed; bottom: 20px; left: 50%;
-            transform: translateX(-50%); display: none; gap: 10px; z-index: 1000; width: 90%; max-width: 500px;
-        }
-        .btn-large {
-            flex: 1; padding: 15px 5px; border-radius: 12px; font-weight: bold;
-            font-size: 0.9em; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(8px); color: white; text-transform: uppercase;
-        }
-        .btn-stop { background: rgba(220, 20, 20, 0.8); }
-        .btn-pause { background: rgba(20, 80, 220, 0.8); }
-        .btn-restart { background: rgba(200, 160, 20, 0.8); color: #000; }
 
         .list-selector-container { 
             width: 95%; max-width: 600px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; 
@@ -149,7 +138,6 @@
         .separator-content { display: grid; grid-template-columns: 35px 1fr; align-items: center; }
         .separator-title { font-size: 1.2em; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; text-align: center; width: 100%; color: #ff4; }
 
-        /* Ajustado para otimizar espaço no celular com os 3 botões */
         .li-main-row { display: flex; align-items: center; gap: 8px; width: 100%; }
         .drag-handle { cursor: grab; color: rgba(255,255,255,0.4); font-size: 20px; touch-action: none; padding: 5px; flex-shrink: 0; }
         .chk-done { flex-shrink: 0; width: 20px; height: 20px; cursor: pointer; }
@@ -198,7 +186,7 @@
         <button class="toggle-player" id="btn-toggle" onclick="togglePlayer()">▼</button>
         <div id="now-playing">Selecione uma faixa</div>
         
-        <!-- Controles Master (ocultados automaticamente no YouTube) -->
+        <!-- Controles Master (Áudio Normal / YouTube) -->
         <div id="audio-controls-group">
             <div class="master-controls-row">
                 <button class="btn-master-action" onclick="restartMedia()">↺ Início</button>
@@ -250,12 +238,6 @@
         </div>
     </div>
 
-    <div id="float-ctrl" class="floating-controls">
-        <button class="btn-large btn-restart" onclick="restartMedia()">↺ Início</button>
-        <button id="btn-pause-float" class="btn-large btn-pause" onclick="togglePlayPauseMaster()">⏸ Pausar</button>
-        <button class="btn-large btn-stop" onclick="stopAll()">■ Stop</button>
-    </div>
-
     <div class="search-container">
         <input type="text" id="search-input" placeholder="🔍 Buscar música ou intérprete..." oninput="filtrarLista()">
         <button class="clear-search" id="btn-clear" onclick="limparBusca()">✕</button>
@@ -270,7 +252,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         let GID_ATUAL = urlParams.get('gid') || '1960210650';
         
-        const CACHE_NAME = 'canto-eta-media-v9';
+        const CACHE_NAME = 'canto-eta-media-v43';
         let modoGerenciamentoAtivo = false;
         let currentSemitones = 0;
         let tomOriginalExtraido = null;
@@ -421,9 +403,6 @@
 
         function stopAll() {
             const yt = document.getElementById('yt-player');
-            const floatCtrl = document.getElementById('float-ctrl');
-            if (floatCtrl) floatCtrl.style.display = 'none';
-            
             const audioControlsGroup = document.getElementById('audio-controls-group');
             if (audioControlsGroup) audioControlsGroup.style.display = 'block';
 
@@ -447,9 +426,7 @@
 
         function atualizarBotoesPlayMaster(texto) {
             const btnMain = document.getElementById('btn-main-play');
-            const btnFloat = document.getElementById('btn-pause-float');
             if (btnMain) btnMain.innerText = texto;
-            if (btnFloat) btnFloat.innerText = texto === "⏸ Pausar" ? "⏸ Pausar" : "▶ Play";
         }
 
         async function togglePlayPauseMaster() {
@@ -548,7 +525,6 @@
             }
         }
 
-        // --- ENVIAR ITEM ESPECÍFICO PARA O GITHUB (COM ÍCONE DE PARTITURA 🎼) ---
         async function enviarItemParaGithub(elementoLi) {
             const dia = getNomeDiaAtual();
             const idItem = elementoLi.dataset.id;
@@ -588,7 +564,6 @@
             
             const musica = dadosItem.musica || elementoLi.querySelector('.song-title')?.innerText.trim() || '';
             const cantor = dadosItem.cantor || elementoLi.querySelector('.interpreter')?.innerText.trim() || '';
-            
             const nomeConcatenado = `${musica} (${cantor})`;
 
             if (!confirm(`Deseja realmente apagar "${musica}" da planilha?`)) return;
@@ -707,12 +682,38 @@
             linhas.slice(1).forEach((linha, index) => {
                 const cols = inlineSplitCSV(linha);
                 const id = cols[0]?.replace(/"/g, '') || ('item-'+index);
+                
                 dadosMap[id] = {
-                    id: id, cantor: cols[1]?.replace(/"/g, '') || '',
+                    id: id, 
+                    cantor: cols[1]?.replace(/"/g, '') || '',
                     musica: cols[2]?.replace(/"/g, '') || '',
                     media: cols[3]?.replace(/"/g, '').trim() || '',
                     tipo: (cols[4]?.replace(/"/g, '') || '').toLowerCase().trim(),
-                    notes: cols[5]?.replace(/"/g, '') || ''
+                    notes: cols[5]?.replace(/"/g, '') || '',
+                    stems: (() => {
+                        let extraTracks = [];
+                        // 1. Coluna G (índice 6) -> Loop Principal (-loop)
+                        if (cols[6] && cols[6].replace(/"/g, '').trim().length > 5) {
+                            extraTracks.push({ name: 'Loop Principal', url: cols[6].replace(/"/g, '').trim(), type: 'trk1' });
+                        }
+                        // 2. Coluna H (índice 7) -> Fill 1 (-fill1)
+                        if (cols[7] && cols[7].replace(/"/g, '').trim().length > 5) {
+                            extraTracks.push({ name: 'Fill 1', url: cols[7].replace(/"/g, '').trim(), type: 'fill1' });
+                        }
+                        // 3. Coluna I (índice 8) -> Fill 2 (-fill2)
+                        if (cols[8] && cols[8].replace(/"/g, '').trim().length > 5) {
+                            extraTracks.push({ name: 'Fill 2', url: cols[8].replace(/"/g, '').trim(), type: 'fill2' });
+                        }
+                        // 4. Coluna J (índice 9) -> Fill 3 (-fill3)
+                        if (cols[9] && cols[9].replace(/"/g, '').trim().length > 5) {
+                            extraTracks.push({ name: 'Fill 3', url: cols[9].replace(/"/g, '').trim(), type: 'fill3' });
+                        }
+                        // 5. Coluna K (índice 10) -> Finalização (-fim)
+                        if (cols[10] && cols[10].replace(/"/g, '').trim().length > 5) {
+                            extraTracks.push({ name: 'Fim (Stop)', url: cols[10].replace(/"/g, '').trim(), type: 'ending' });
+                        }
+                        return extraTracks;
+                    })()
                 };
             });
             dadosGlobaisPlanilha = dadosMap;
@@ -737,6 +738,10 @@
                 li.className = 'glass-panel';
                 li.dataset.id = item.id;
                 
+                const temMediaPrincipal = item.media && item.media.length > 5;
+                const temStems = item.stems && item.stems.length > 0;
+                const temMidiaValida = temMediaPrincipal || temStems;
+                
                 const urlFinal = normalizarUrlMidia(item.media);
                 li.dataset.media = urlFinal;
 
@@ -747,9 +752,9 @@
                     const salvoInfo = estadosCheck[item.id] || { done: false, notas: "" };
                     if(salvoInfo.done) li.classList.add('done');
                     const notaFinal = (salvoInfo.notas && salvoInfo.notas.trim() !== "") ? salvoInfo.notas : item.notes;
-                    const temMidia = item.media && item.media.length > 5;
-                    const ehYouTube = item.media && (item.media.includes('youtube.com') || item.media.includes('youtu.be') || item.media.length === 11);
-                    const ehGitHub = item.media && (item.media.includes('github.io') || item.media.includes('github.com'));
+                    
+                    const ehYouTube = temMediaPrincipal && (item.media.includes('youtube.com') || item.media.includes('youtu.be') || item.media.length === 11);
+                    const ehGitHub = temMediaPrincipal && (item.media.includes('github.io') || item.media.includes('github.com'));
 
                     let displayHTML = '';
                     if (item.tipo === 'estudo') {
@@ -759,11 +764,13 @@
                         displayHTML = `<span class="interpreter">${item.cantor}</span><span class="song-title">${item.musica}</span>`;
                     }
 
+                    let stemsStringEncoded = encodeURIComponent(JSON.stringify(item.stems));
+
                     let botoesAcao = `
                         <div class="action-buttons">
-                            ${temMidia && !ehYouTube && !ehGitHub ? `<button class="btn-github-upload" onclick="enviarItemParaGithub(this.closest('li'))" title="Enviar para o GitHub (Partitura)">🎼</button>` : ''}
-                            ${temMidia && !ehYouTube ? `<button class="btn-cache" data-url="${urlFinal}" onclick="toggleCache('${urlFinal}', this)">⬇️</button>` : ''}
-                            ${temMidia ? `<button class="btn-play" onclick="tocar('${item.tipo}', '${item.media.replace(/'/g, "\\'")}', '${item.cantor.replace(/'/g, "\\'")}', '${item.musica.replace(/'/g, "\\'")}', this.closest('li'))">▶</button>` : ''}
+                            ${temMediaPrincipal && !ehYouTube && !ehGitHub ? `<button class="btn-github-upload" onclick="enviarItemParaGithub(this.closest('li'))" title="Enviar para o GitHub (Partitura)">🎼</button>` : ''}
+                            ${temMediaPrincipal && !ehYouTube ? `<button class="btn-cache" data-url="${urlFinal}" onclick="toggleCache('${urlFinal}', this)">⬇️</button>` : ''}
+                            ${temMidiaValida ? `<button class="btn-play" onclick="tocar('${item.media.replace(/'/g, "\\'")}', '${item.cantor.replace(/'/g, "\\'")}', '${item.musica.replace(/'/g, "\\'")}', '${stemsStringEncoded}', this.closest('li'))">▶</button>` : ''}
                             <button class="btn-delete-sheet" onclick="deletarItemPlanilha(this.closest('li'))" title="Excluir">🗑️</button>
                         </div>
                     `;
@@ -787,7 +794,20 @@
             atualizarStatusBotoesCache();
         }
 
-        async function tocar(tipo, media, cantor, musica, elementoLi) {
+        function tocar(media, cantor, musica, stemsEncoded, elementoLi) {
+            let parsedStems = [];
+            try { parsedStems = JSON.parse(decodeURIComponent(stemsEncoded)); } catch(e){}
+
+            const temMediaPrincipal = media && media.length > 5;
+
+            // REGRA: SE A COLUNA E ESTIVER VAZIA E HOUVER STEMS (MULTIPLAYER), ABRE A NOVA PÁGINA DEDICADA DO BTK
+            if (!temMediaPrincipal && parsedStems.length > 0) {
+                const urlMultilayer = `btk_stems.html?musica=${encodeURIComponent(musica)}&cantor=${encodeURIComponent(cantor)}&stems=${stemsEncoded}`;
+                window.location.href = urlMultilayer;
+                return;
+            }
+
+            // CASO CONTRÁRIO, EXECUTA O PLAYER PADRÃO (ÁUDIO OU YOUTUBE)
             const yt = document.getElementById('yt-player');
             const audioControlsGroup = document.getElementById('audio-controls-group');
             
@@ -800,9 +820,6 @@
             const nowPlaying = document.getElementById('now-playing');
             if (nowPlaying) nowPlaying.innerHTML = `Carregando: <b>${musica}</b><br><small>${cantor}</small>`;
             
-            const floatCtrl = document.getElementById('float-ctrl');
-            if (floatCtrl) floatCtrl.style.display = 'flex';
-            
             const notasItem = elementoLi?.querySelector('.notes-field')?.innerText || "";
             tomOriginalExtraido = extrairTomDaString(notasItem) || extrairTomDaString(musica) || extrairTomDaString(cantor);
 
@@ -810,11 +827,10 @@
             pararTonePlayer();
             currentSemitones = 0;
             atualizarDisplayPitch();
-            
+
             const ehYouTube = media.includes('youtube.com') || media.includes('youtu.be') || (media.length === 11 && !media.includes('http'));
             
             if (ehYouTube) {
-                // Esconde os controles de áudio nativo / Tone.js quando for YouTube
                 if (audioControlsGroup) audioControlsGroup.style.display = 'none';
                 if (yt) {
                     yt.style.display = 'block';
@@ -823,9 +839,7 @@
                 }
                 if (nowPlaying) nowPlaying.innerHTML = `Tocando: <b>${musica}</b><br><small>${cantor}</small>`;
             } else {
-                // Mostra os controles de áudio nativo / Tone.js para arquivos de áudio
                 if (audioControlsGroup) audioControlsGroup.style.display = 'block';
-                
                 let url = normalizarUrlMidia(media);
                 const ehDropbox = url.includes('dropbox.com');
 
