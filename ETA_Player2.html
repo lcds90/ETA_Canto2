@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - Roberto !A/B!</title>
+    <title>Canto ETA - Roberto !A-B!</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
@@ -261,7 +261,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         let GID_ATUAL = urlParams.get('gid') || '1960210650';
         
-        const CACHE_NAME = 'canto-eta-media-v41';
+        const CACHE_NAME = 'canto-eta-media-v42';
         let modoGerenciamentoAtivo = false;
         let currentSemitones = 0;
         let tomOriginalExtraido = null;
@@ -272,11 +272,12 @@
         let tonePlayerNode = null;
         let progressInterval = null;
 
-        // Variáveis do Multiplayer Nativo (Colunas H, I, J)
+        // Variáveis do Multiplayer Nativo com Duplo Buffer (Colunas H, I, J)
         let activeAudioElements = [];
         let isMultiplayerActive = false;
         let isPlayingMulti = false;
         let masterDurationMulti = 0;
+        let loopCheckInterval = null;
 
         const NOTAS_CROMATICAS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
         const NOTAS_FLAT_MAP = { "Db":"C#", "Eb":"D#", "Gb":"F#", "Ab":"G#", "Bb":"A#" };
@@ -421,6 +422,10 @@
                 clearInterval(progressInterval);
                 progressInterval = null;
             }
+            if (loopCheckInterval) {
+                clearInterval(loopCheckInterval);
+                loopCheckInterval = null;
+            }
             isMultiplayerActive = false;
             isPlayingMulti = false;
         }
@@ -486,7 +491,7 @@
             }
         }
 
-        // --- MULTIPLAYER NATIVO (Elementados <audio> sincronizados) ---
+        // --- MULTIPLAYER NATIVO COM DUPLO BUFFER (LOOP PERFEITO SEM GAP) ---
         function togglePlayLoop() {
             if (activeAudioElements.length === 0) return;
             if (!isPlayingMulti) {
@@ -497,13 +502,14 @@
         }
 
         function playMultiplayerNativo() {
-            const audioTrk1 = activeAudioElements.find(s => s.type === 'trk1')?.audio;
-            if (!audioTrk1) return;
+            const audioA = activeAudioElements.find(s => s.type === 'trk1_a')?.audio;
+            if (!audioA) return;
 
-            audioTrk1.play().then(() => {
+            audioA.currentTime = 0;
+            audioA.play().then(() => {
                 isPlayingMulti = true;
                 atualizarBotoesPlayMaster("⏸ Pausar");
-                iniciarMonitoramentoMultiplayer();
+                iniciarMonitoramentoMultiplayerPerfeito();
             }).catch(err => {
                 console.error("Erro ao reproduzir multiplayer:", err);
                 alert("O navegador bloqueou a reprodução automática.");
@@ -517,23 +523,26 @@
             isPlayingMulti = false;
             atualizarBotoesPlayMaster("▶ Loop");
             if (progressInterval) clearInterval(progressInterval);
+            if (loopCheckInterval) clearInterval(loopCheckInterval);
         }
 
-        // 🪘 VIRA (Coluna I): Pausa o Loop (H) e toca o Trk2 (I)
+        // 🪘 VIRA (Coluna I): Pausa o Loop e toca o Trk2
         function dispararFillTrk2() {
             if (!isMultiplayerActive) return;
-            const audioTrk1 = activeAudioElements.find(s => s.type === 'trk1')?.audio;
+            const audioA = activeAudioElements.find(s => s.type === 'trk1_a')?.audio;
+            const audioB = activeAudioElements.find(s => s.type === 'trk1_b')?.audio;
             const audioTrk2 = activeAudioElements.find(s => s.type === 'trk2')?.audio;
             if (!audioTrk2) return;
 
-            if (audioTrk1) audioTrk1.pause();
+            if (audioA) audioA.pause();
+            if (audioB) audioB.pause();
 
             audioTrk2.currentTime = 0;
             audioTrk2.play().catch(e => console.error(e));
 
             audioTrk2.onended = () => {
-                if (audioTrk1 && isPlayingMulti) {
-                    audioTrk1.play().catch(e => console.error(e));
+                if (isPlayingMulti) {
+                    playMultiplayerNativo();
                 }
             };
         }
@@ -555,29 +564,48 @@
             }
         }
 
-        function iniciarMonitoramentoMultiplayer() {
+        function iniciarMonitoramentoMultiplayerPerfeito() {
             if (progressInterval) clearInterval(progressInterval);
-            const audioTrk1 = activeAudioElements.find(s => s.type === 'trk1')?.audio;
-            if (!audioTrk1) return;
+            if (loopCheckInterval) clearInterval(loopCheckInterval);
+
+            const audioA = activeAudioElements.find(s => s.type === 'trk1_a')?.audio;
+            const audioB = activeAudioElements.find(s => s.type === 'trk1_b')?.audio;
+            if (!audioA || !audioB) return;
+
+            let activeTrack = audioA;
+            let standbyTrack = audioB;
+            let triggeredNext = false;
+
+            // Transição antecipada a cada 30ms para eliminar o atraso/silêncio do loop
+            loopCheckInterval = setInterval(() => {
+                if (!isPlayingMulti || masterDurationMulti === 0) return;
+                const timeLeft = masterDurationMulti - activeTrack.currentTime;
+
+                if (timeLeft <= 0.15 && !triggeredNext) {
+                    triggeredNext = true;
+                    standbyTrack.currentTime = 0;
+                    standbyTrack.play().catch(e => {});
+
+                    let temp = activeTrack;
+                    activeTrack = standbyTrack;
+                    standbyTrack = temp;
+
+                    setTimeout(() => { triggeredNext = false; }, 300);
+                }
+            }, 30);
 
             progressInterval = setInterval(() => {
-                if (!isPlayingMulti || !audioTrk1.duration) return;
-                const currentPos = audioTrk1.currentTime;
-                const duracaoTotal = masterDurationMulti;
+                if (!isPlayingMulti || masterDurationMulti === 0) return;
+                const currentPos = activeTrack.currentTime;
 
                 const seekBar = document.getElementById('seek-bar');
                 const timeCurrent = document.getElementById('time-current');
                 const timeTotal = document.getElementById('time-total');
 
-                if (seekBar && duracaoTotal > 0) seekBar.value = (currentPos / duracaoTotal) * 100;
+                if (seekBar) seekBar.value = (currentPos / masterDurationMulti) * 100;
                 if (timeCurrent) timeCurrent.innerText = formatarTempo(currentPos);
-                if (timeTotal) timeTotal.innerText = formatarTempo(duracaoTotal);
-
-                if (audioTrk1.ended) {
-                    audioTrk1.currentTime = 0;
-                    audioTrk1.play();
-                }
-            }, 200);
+                if (timeTotal) timeTotal.innerText = formatarTempo(masterDurationMulti);
+            }, 100);
         }
 
         function seekingAudio(valPorcentagem) {
@@ -997,13 +1025,6 @@
             atualizarStatusBotoesCache();
         }
 
-// Variáveis atualizadas para o Multiplayer com Duplo Buffer
-        let activeAudioElements = [];
-        let isMultiplayerActive = false;
-        let isPlayingMulti = false;
-        let masterDurationMulti = 0;
-        let loopCheckInterval = null;
-
         async function tocar(media, cantor, musica, stemsEncoded, elementoLi) {
             const yt = document.getElementById('yt-player');
             const audioControlsGroup = document.getElementById('audio-controls-group');
@@ -1031,7 +1052,7 @@
 
             const temMediaPrincipal = media && media.length > 5;
 
-            // REGRA DO MULTIPLAYER COM DUPLO BUFFER PARA LOOP PERFEITO
+            // REGRA: SE COLUNA E ESTIVER VAZIA, USA O MULTIPLAYER COM DUPLO BUFFER (A/B)
             if (!temMediaPrincipal && parsedStems.length > 0) {
                 try {
                     activeAudioElements = [];
@@ -1040,11 +1061,11 @@
                     for (let i = 0; i < parsedStems.length; i++) {
                         const rawUrl = parsedStems[i].url;
                         if (!rawUrl || rawUrl.length < 5) continue;
+
                         const sUrl = normalizarUrlMidia(rawUrl);
                         const type = parsedStems[i].type;
 
                         if (type === 'trk1') {
-                            // Criamos DUAS instâncias para o Trk1 para alternância sem gap (A e B)
                             const audioA = new Audio();
                             const audioB = new Audio();
                             audioA.crossOrigin = audioB.crossOrigin = "anonymous";
@@ -1063,7 +1084,6 @@
                                 }
                             };
                         } else {
-                            // Trk2 e Trk3 mantêm uma única instância
                             const audioTag = new Audio();
                             audioTag.crossOrigin = "anonymous";
                             audioTag.preload = "auto";
@@ -1089,89 +1109,64 @@
                 return;
             }
 
-            // (Player normal de áudio/YouTube continua igual...)
-        }
+            // PLAYER NORMAL (Áudio único ou YouTube)
+            if (audioControlsGroup) audioControlsGroup.style.display = 'block';
+            if (loopPedalsRow) loopPedalsRow.style.display = 'none';
 
-        function playMultiplayerNativo() {
-            const audioA = activeAudioElements.find(s => s.type === 'trk1_a')?.audio;
-            if (!audioA) return;
-
-            audioA.currentTime = 0;
-            audioA.play().then(() => {
-                isPlayingMulti = true;
-                atualizarBotoesPlayMaster("⏸ Pausar");
-                iniciarMonitoramentoMultiplayerPerfeito();
-            }).catch(err => {
-                console.error("Erro ao reproduzir:", err);
-                alert("O navegador bloqueou a reprodução automática.");
-            });
-        }
-
-        function pauseMultiplayerNativo() {
-            activeAudioElements.forEach(item => {
-                if (item.audio) item.audio.pause();
-            });
-            isPlayingMulti = false;
-            atualizarBotoesPlayMaster("▶ Loop");
-            if (progressInterval) clearInterval(progressInterval);
-            if (loopCheckInterval) clearInterval(loopCheckInterval);
-        }
-
-        // Monitoramento inteligente que dispara o segundo áudio antes do fim do primeiro (Elimina o gap)
-        function iniciarMonitoramentoMultiplayerPerfeito() {
-            if (progressInterval) clearInterval(progressInterval);
-            if (loopCheckInterval) clearInterval(loopCheckInterval);
-
-            const audioA = activeAudioElements.find(s => s.type === 'trk1_a')?.audio;
-            const audioB = activeAudioElements.find(s => s.type === 'trk1_b')?.audio;
-            if (!audioA || !audioB) return;
-
-            let activeTrack = audioA;
-            let standbyTrack = audioB;
-            let triggeredNext = false;
-
-            // Checagem de alta frequência (a cada 30ms) para antecipar a troca exata
-            loopCheckInterval = setInterval(() => {
-                if (!isPlayingMulti || masterDurationMulti === 0) return;
-
-                const timeLeft = masterDurationMulti - activeTrack.currentTime;
-
-                // Quando faltar 0.15 segundos (150ms) para acabar, disparamos o áudio de reserva em segundo plano
-                if (timeLeft <= 0.15 && !triggeredNext) {
-                    triggeredNext = true;
-                    standbyTrack.currentTime = 0;
-                    standbyTrack.play().catch(e => {});
-
-                    // Invertemos os papéis para o próximo ciclo
-                    let temp = activeTrack;
-                    activeTrack = standbyTrack;
-                    standbyTrack = temp;
-
-                    // Reseta a flag de disparo após 300ms
-                    setTimeout(() => { triggeredNext = false; }, 300);
+            const ehYouTube = media.includes('youtube.com') || media.includes('youtu.be') || (media.length === 11 && !media.includes('http'));
+            
+            if (ehYouTube) {
+                if (audioControlsGroup) audioControlsGroup.style.display = 'none';
+                if (yt) {
+                    yt.style.display = 'block';
+                    let id = media.includes('v=') ? media.split('v=')[1].split('&')[0] : (media.includes('be/') ? media.split('be/')[1] : media);
+                    yt.src = `https://www.youtube.com/embed/${id}?autoplay=1`;
                 }
-            }, 30);
+                if (nowPlaying) nowPlaying.innerHTML = `Tocando: <b>${musica}</b><br><small>${cantor}</small>`;
+            } else {
+                let url = normalizarUrlMidia(media);
+                const ehDropbox = url.includes('dropbox.com');
 
-            // Atualização da barra de progresso visual
-            progressInterval = setInterval(() => {
-                if (!isPlayingMulti || masterDurationMulti === 0) return;
-                const currentPos = activeTrack.currentTime;
+                try {
+                    audioElementNativo = new Audio();
+                    if (!ehDropbox) { audioElementNativo.crossOrigin = "anonymous"; }
+                    audioElementNativo.src = url;
 
-                const seekBar = document.getElementById('seek-bar');
-                const timeCurrent = document.getElementById('time-current');
-                const timeTotal = document.getElementById('time-total');
+                    audioElementNativo.onloadedmetadata = async () => {
+                        const timeTotal = document.getElementById('time-total');
+                        const timeCurrent = document.getElementById('time-current');
+                        const seekBar = document.getElementById('seek-bar');
+                        
+                        if (timeTotal) timeTotal.innerText = formatarTempo(audioElementNativo.duration);
+                        if (timeCurrent) timeCurrent.innerText = "00:00";
+                        if (seekBar) seekBar.value = 0;
 
-                if (seekBar) seekBar.value = (currentPos / masterDurationMulti) * 100;
-                if (timeCurrent) timeCurrent.innerText = formatarTempo(currentPos);
-                if (timeTotal) timeTotal.innerText = formatarTempo(masterDurationMulti);
-            }, 100);
-        }
+                        if (!ehDropbox) {
+                            try {
+                                await Tone.start();
+                                if (Tone.context.state !== 'running') { await Tone.context.resume(); }
+                                tonePitchShift = new Tone.PitchShift({ pitch: currentSemitones }).toDestination();
+                                tonePlayerNode = Tone.context.createMediaElementSource(audioElementNativo);
+                                Tone.connect(tonePlayerNode, tonePitchShift);
+                            } catch(err) {
+                                console.error("Erro ao ligar ao Tone.js:", err);
+                            }
+                        }
 
-        function pararTonePlayer() {
-            // ... (código existente de limpeza) ...
-            if (loopCheckInterval) {
-                clearInterval(loopCheckInterval);
-                loopCheckInterval = null;
+                        if (nowPlaying) nowPlaying.innerHTML = `Pronto: <b>${musica}</b><br><small>${cantor} (Clique em Play)</small>`;
+                        atualizarBotoesPlayMaster("▶ Play");
+                    };
+
+                    audioElementNativo.onerror = (e) => {
+                        console.error("Erro no carregamento:", e);
+                        alert(`Erro ao carregar o ficheiro de áudio:\n${url}`);
+                    };
+
+                    audioElementNativo.load();
+                } catch (err) {
+                    console.error("Erro:", err);
+                    alert("Erro ao iniciar o motor de áudio.");
+                }
             }
         }
 
