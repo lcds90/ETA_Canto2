@@ -1,1 +1,1190 @@
+<!DOCTYPE html>
+<!-- 
+  ==============================================================================
+  Para conectar este site a outro Google Sheets / Web App:
+  1. Ir até a tag <script> abaixo (por volta da linha 430).
+  2. Alterar a constante WEB_APP_URL com a nova URL do Apps Script.
+  ==============================================================================
+-->
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BTK - Multi-Track Studio</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --accent-color: #ff9800;
+            --fill-color: #e91e63;
+            --ending-color: #9c27b0;
+            --text-color: #ffffff;
+            --subtext-color: #b0b0b0;
+            --error-color: #f44336;
+            --success-color: #4caf50;
+            --btn-off: #424242;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+        }
+
+        @media (max-width: 500px) {
+            body { padding: 0; }
+            .container {
+                max-width: 100%;
+                min-height: 100vh;
+                border-radius: 0;
+                box-shadow: none;
+                justify-content: space-between;
+            }
+        }
+
+        .license-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(18, 18, 18, 0.96);
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
+            z-index: 200;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            padding: 24px; text-align: center; gap: 16px;
+        }
+        .license-overlay.hidden { display: none; }
+
+        .license-input {
+            width: 100%; padding: 16px; font-size: 1.1rem;
+            text-align: center; letter-spacing: 2px;
+            background: #2a2a2a; color: var(--text-color);
+            border: 2px solid #444; border-radius: 12px;
+            outline: none; text-transform: uppercase;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #2a2a2a;
+            border-radius: 12px;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 8px 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            background: transparent;
+            color: var(--subtext-color);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-color);
+            color: #000;
+        }
+
+        .tab-content { display: none; flex-direction: column; gap: 12px; }
+        .tab-content.active { display: flex; }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+            padding-bottom: 8px;
+        }
+
+        .header h2 { margin: 0; font-size: 1.1rem; }
+
+        .status-badge {
+            font-size: 0.75rem; padding: 4px 8px;
+            border-radius: 12px; background: #333;
+            color: var(--subtext-color);
+        }
+        .status-badge.online { background: rgba(76, 175, 80, 0.2); color: var(--success-color); }
+        .status-badge.offline { background: rgba(244, 67, 54, 0.2); color: var(--error-color); }
+
+        select {
+            width: 100%; padding: 12px; font-size: 0.95rem;
+            background: #2a2a2a; color: var(--text-color);
+            border: 2px solid #444; border-radius: 12px;
+            outline: none; cursor: pointer;
+        }
+
+        .timer-box {
+            text-align: center; background: #181818;
+            padding: 10px 14px; border-radius: 12px;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+
+        .timer-inner-content { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+        }
+
+        .timer-display { 
+            font-size: 1.8rem; 
+            font-weight: bold; 
+            font-family: monospace; 
+            color: var(--text-color); 
+        }
+
+        .loop-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+            font-family: monospace;
+            color: var(--accent-color);
+            margin-left: 10px;
+        }
+
+        .progress-bar-bg {
+            width: 100%; height: 8px;
+            background: #2a2a2a; border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%; width: 0%;
+            background: var(--accent-color);
+            transition: width 0.06s linear, background-color 0.3s linear;
+        }
+        .progress-bar-fill.playing-fill { background: var(--fill-color); }
+        .progress-bar-fill.playing-ending { background: var(--ending-color); }
+
+        .playlist-info-badge {
+            font-size: 0.8rem; background: #252525; padding: 6px 12px;
+            border-radius: 20px; color: var(--accent-color); border: 1px solid #333;
+        }
+
+        .speed-control { display: flex; flex-direction: column; gap: 4px; }
+        .speed-header { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: bold; }
+
+        input[type="range"] {
+            width: 100%; height: 10px; border-radius: 8px;
+            accent-color: var(--accent-color); cursor: pointer;
+        }
+
+        .player-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+        button {
+            padding: 12px; font-size: 0.9rem; font-weight: bold;
+            border: none; border-radius: 10px; cursor: pointer; transition: all 0.2s;
+        }
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .btn-play { background: var(--accent-color); color: #000; }
+        .btn-stop { background: #333; color: var(--text-color); }
+        .btn-stop.armed { background: var(--ending-color); color: #fff; }
+        
+        .btn-fill {
+            background: var(--fill-color); color: #fff;
+            grid-column: span 2; font-size: 0.95rem;
+        }
+        .btn-fill.armed { animation: pulse 0.8s infinite alternate; background: #ff5252; }
+
+        .btn-add-playlist {
+            background: #2e7d32; color: #fff; padding: 10px;
+            font-size: 0.8rem; border-radius: 8px; font-weight: bold;
+        }
+
+        .btn-clear-cache {
+            background: transparent; color: var(--subtext-color);
+            border: 1px solid #444; padding: 8px 10px;
+            font-size: 0.75rem; border-radius: 8px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-clear-cache:hover { background: #2a2a2a; color: var(--text-color); }
+
+        @keyframes pulse {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0.7; transform: scale(0.99); }
+        }
+
+        .stems-container {
+            display: flex; flex-direction: column; gap: 6px;
+            background: #181818; padding: 8px; border-radius: 10px;
+            max-height: 180px; overflow-y: auto;
+        }
+
+        .stem-row {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #2a2a2a; padding: 6px 10px; border-radius: 6px;
+        }
+
+        .btn-toggle { padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; min-width: 50px; }
+        .btn-toggle.on { background: var(--success-color); color: #fff; }
+        .btn-toggle.off { background: var(--btn-off); color: var(--subtext-color); }
+
+        .playlist-container {
+            display: flex; flex-direction: column; gap: 8px;
+            max-height: 320px; overflow-y: auto;
+        }
+
+        .playlist-item {
+            background: #181818; border: 1px solid #333; padding: 8px 12px;
+            border-radius: 8px; display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .playlist-item.active {
+            border-color: var(--accent-color); background: rgba(255, 152, 0, 0.1);
+        }
+
+        .playlist-item-title { font-size: 0.85rem; font-weight: bold; }
+        .playlist-item-actions { display: flex; gap: 4px; }
+
+        .btn-mini {
+            padding: 4px 8px; font-size: 0.7rem; border-radius: 4px; background: #333; color: #fff;
+        }
+
+        .pedal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .pedal-card {
+            background: #181818; padding: 8px; border-radius: 8px;
+            border: 1px solid #333; display: flex; flex-direction: column; gap: 4px;
+        }
+        .pedal-title { font-size: 0.8rem; font-weight: bold; color: var(--accent-color); display: flex; justify-content: space-between; }
+        .pedal-key-badge { font-size: 0.65rem; background: #333; padding: 2px 4px; border-radius: 4px; color: var(--subtext-color); }
+        .test-box {
+            background: #181818; border: 2px dashed #444; padding: 10px;
+            border-radius: 8px; text-align: center; font-size: 0.75rem; color: var(--subtext-color);
+        }
+        .test-box.active { border-color: var(--success-color); color: var(--success-color); font-weight: bold; }
+        .toast { font-size: 0.75rem; text-align: center; color: var(--subtext-color); min-height: 16px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="licenseOverlay" class="license-overlay">
+        <h2>🔑 Ativação BTK</h2>
+        <p style="color: var(--subtext-color); font-size: 0.85rem; margin: 0;">Insira sua chave de licença para liberar o aplicativo.</p>
+        <input type="text" id="licenseKeyInput" class="license-input" placeholder="XXXX-XXXX-XXXX" autocomplete="off">
+        <button id="btnActivate" style="width:100%; background:var(--accent-color); color:#000; font-weight:bold;">ATIVAR LICENÇA</button>
+        <div id="licenseMessage" style="color: var(--error-color); font-size: 0.85rem; min-height: 18px;"></div>
+    </div>
+
+    <div class="header">
+        <h2>🥁 BTK Studio</h2>
+        <span id="status" class="status-badge">Detectando...</span>
+    </div>
+
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('playerTab')">🎛️ Player</button>
+        <button class="tab-btn" onclick="switchTab('playlistTab')">📋 Playlist</button>
+        <button class="tab-btn" onclick="switchTab('pedalTab')">🦿 Pedal</button>
+    </div>
+
+    <!-- TELA 1: PLAYER -->
+    <div id="playerTab" class="tab-content active">
+        <div>
+            <select id="trackSelect" disabled>
+                <option>Carregando lista...</option>
+            </select>
+        </div>
+
+        <div id="playlistInfoBadge" class="playlist-info-badge" style="display: none; text-align: center;">
+            📍 Sequência do Show: <b id="playlistPosText">0 / 0</b>
+        </div>
+
+        <div class="timer-box">
+            <div class="timer-inner-content">
+                <span id="timerDisplay" class="timer-display">00:00.0</span>
+                <span id="loopCounter" class="loop-display">1</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div id="progressBarFill" class="progress-bar-fill"></div>
+            </div>
+        </div>
+
+        <div class="speed-control">
+            <div class="speed-header">
+                <span>⏱️ VELOCIDADE</span>
+                <span id="speedDisplay">100%</span>
+            </div>
+            <input type="range" id="speedSlider" min="50" max="150" value="100" step="5">
+        </div>
+
+        <div class="player-controls">
+            <button id="btnPlay" class="btn-play" disabled>PLAY</button>
+            <button id="btnStop" class="btn-stop" disabled>STOP</button>
+            <button id="btnFill" class="btn-fill" disabled>🪘 VIRADA / FILL</button>
+        </div>
+
+        <button id="btnAddPlaylist" class="btn-add-playlist" disabled>➕ ADICIONAR À PLAYLIST</button>
+
+        <div id="stemsContainer" class="stems-container">
+            <div style="text-align: center; color: var(--subtext-color); font-size: 0.85rem;">
+                Selecione uma música para carregar os canais.
+            </div>
+        </div>
+
+        <div id="toastMessage" class="toast">Aguardando ativação...</div>
+        <button id="btnClearCache" class="btn-clear-cache">🗑️ Limpar Áudio Selecionado do Cache</button>
+    </div>
+
+    <!-- TELA 3: PLAYLIST -->
+    <div id="playlistTab" class="tab-content">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <b style="font-size: 0.9rem;">📋 Fila de Execução do Show</b>
+            <button class="btn-mini" onclick="clearPlaylist()" style="background: var(--error-color);">🗑️ Limpar Tudo</button>
+        </div>
+
+        <div id="playlistItems" class="playlist-container">
+            <div style="text-align: center; color: var(--subtext-color); font-size: 0.85rem; padding: 20px;">
+                Sua playlist está vazia.<br>Selecione músicas no Player e clique em "Adicionar à Playlist".
+            </div>
+        </div>
+    </div>
+
+    <!-- TELA 2: PEDAL -->
+    <div id="pedalTab" class="tab-content">
+        <div style="font-size: 0.8rem; color: var(--subtext-color); text-align: center;">
+            Mapeamento do Chocolate Plus no modo <b>Keyboard B</b>:
+        </div>
+
+        <div class="pedal-grid">
+            <div class="pedal-card">
+                <div class="pedal-title"><span>PEDAL A</span><span class="pedal-key-badge">PageUp</span></div>
+                <select id="actionPedalA" onchange="savePedalConfig()">
+                    <option value="stop">⏹ Stop / Finalização</option>
+                    <option value="play">▶ Play / Pause</option>
+                    <option value="fill">🪘 Virada / Fill</option>
+                    <option value="next_track">⏭️ Próxima (Playlist)</option>
+                    <option value="speed_up">⏱️ Velocidade +5%</option>
+                </select>
+            </div>
+
+            <div class="pedal-card">
+                <div class="pedal-title"><span>PEDAL B</span><span class="pedal-key-badge">PageDown</span></div>
+                <select id="actionPedalB" onchange="savePedalConfig()">
+                    <option value="play">▶ Play / Pause</option>
+                    <option value="fill">🪘 Virada / Fill</option>
+                    <option value="stop">⏹ Stop / Finalização</option>
+                    <option value="next_track">⏭️ Próxima (Playlist)</option>
+                    <option value="speed_up">⏱️ Velocidade +5%</option>
+                </select>
+            </div>
+
+            <div class="pedal-card">
+                <div class="pedal-title"><span>PEDAL C</span><span class="pedal-key-badge">Espaço</span></div>
+                <select id="actionPedalC" onchange="savePedalConfig()">
+                    <option value="fill">🪘 Virada / Fill</option>
+                    <option value="play">▶ Play / Pause</option>
+                    <option value="stop">⏹ Stop / Finalização</option>
+                    <option value="next_track">⏭️ Próxima (Playlist)</option>
+                </select>
+            </div>
+
+            <div class="pedal-card">
+                <div class="pedal-title"><span>PEDAL D</span><span class="pedal-key-badge">Enter</span></div>
+                <select id="actionPedalD" onchange="savePedalConfig()">
+                    <option value="next_track">⏭️ Próxima (Playlist)</option>
+                    <option value="speed_up">⏱️ Velocidade +5%</option>
+                    <option value="play">▶ Play / Pause</option>
+                    <option value="fill">🪘 Virada / Fill</option>
+                    <option value="stop">⏹ Stop / Finalização</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="testPedalBox" class="test-box">
+            🦶 <b>TESTE DO PEDAL:</b> Pise em qualquer botão do Chocolate Plus para validar o sinal.
+        </div>
+    </div>
+</div>
+
+<script>
+    const VALID_LICENSES = ['BTK-2026-VIP', 'PERCUSSAO-100', 'SHOW-BTK-88'];
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyGsTdTZ_GsErA4ftNxER72bFlvv2axUGqB-npctmPVLJBalT9G4436-5QWErSRAeyr/exec';
+    const CACHE_NAME = 'btk-audio-cache-v18';
+
+    const licenseOverlay = document.getElementById('licenseOverlay');
+    const licenseKeyInput = document.getElementById('licenseKeyInput');
+    const trackSelect = document.getElementById('trackSelect');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const loopCounter = document.getElementById('loopCounter');
+    const progressBarFill = document.getElementById('progressBarFill');
+    const speedSlider = document.getElementById('speedSlider');
+    const speedDisplay = document.getElementById('speedDisplay');
+    const btnPlay = document.getElementById('btnPlay');
+    const btnStop = document.getElementById('btnStop');
+    const btnFill = document.getElementById('btnFill');
+    const btnAddPlaylist = document.getElementById('btnAddPlaylist');
+    const btnClearCache = document.getElementById('btnClearCache');
+    const stemsContainer = document.getElementById('stemsContainer');
+    const statusBadge = document.getElementById('status');
+    const toastMessage = document.getElementById('toastMessage');
+
+    // WEB AUDIO API CONTEXT
+    let audioCtx = null;
+    function getAudioContext() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        return audioCtx;
+    }
+
+    let songsData = [];
+    let playlist = [];
+    let currentPlaylistIndex = -1;
+
+    // ESTRUTURAS DE CANAIS
+    let stemsData = [];      // { name, buffer, gainNode, sourceNode, isMuted }
+    let fillData = [];       // { buffer }
+    let endingData = [];     // { buffer }
+
+    let isPlaying = false;
+    let isFillArmed = false;
+    let isFillPlaying = false;
+    let isEndingArmed = false;
+    let isEndingPlaying = false;
+    
+    let startTime = 0;       // Momento do audioCtx em que o áudio começou a tocar
+    let startOffset = 0;     // Posição acumulada ao pausar (em segundos)
+    let masterDuration = 0;  // Duração exata do loop mestre em segundos
+    let currentLoopCount = 1;
+    let syncInterval = null;
+    let currentOriginalBpm = null;
+
+    let pedalConfig = {
+        'pageup': 'stop',
+        'pagedown': 'play',
+        ' ': 'fill',
+        'enter': 'next_track'
+    };
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        
+        if (tabId === 'playerTab') {
+            document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            document.getElementById('playerTab').classList.add('active');
+        } else if (tabId === 'playlistTab') {
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            document.getElementById('playlistTab').classList.add('active');
+        } else {
+            document.querySelectorAll('.tab-btn')[2].classList.add('active');
+            document.getElementById('pedalTab').classList.add('active');
+        }
+    }
+
+    function checkLicense() {
+        const savedKey = localStorage.getItem('btk_license_key');
+        if (savedKey && VALID_LICENSES.includes(savedKey.trim().toUpperCase())) {
+            licenseOverlay.classList.add('hidden');
+            initApp();
+        } else {
+            licenseOverlay.classList.remove('hidden');
+        }
+    }
+
+    document.getElementById('btnActivate').addEventListener('click', () => {
+        const inputKey = licenseKeyInput.value.trim().toUpperCase();
+        if (VALID_LICENSES.includes(inputKey)) {
+            localStorage.setItem('btk_license_key', inputKey);
+            licenseOverlay.classList.add('hidden');
+            initApp();
+        } else {
+            document.getElementById('licenseMessage').textContent = 'Chave inválida.';
+        }
+    });
+
+    function loadPedalConfig() {
+        const saved = localStorage.getItem('btk_pedal_config');
+        if (saved) {
+            try {
+                pedalConfig = JSON.parse(saved);
+                document.getElementById('actionPedalA').value = pedalConfig['pageup'] || 'stop';
+                document.getElementById('actionPedalB').value = pedalConfig['pagedown'] || 'play';
+                document.getElementById('actionPedalC').value = pedalConfig[' '] || 'fill';
+                document.getElementById('actionPedalD').value = pedalConfig['enter'] || 'next_track';
+            } catch(e){}
+        }
+    }
+
+    function savePedalConfig() {
+        pedalConfig = {
+            'pageup': document.getElementById('actionPedalA').value,
+            'pagedown': document.getElementById('actionPedalB').value,
+            ' ': document.getElementById('actionPedalC').value,
+            'enter': document.getElementById('actionPedalD').value
+        };
+        localStorage.setItem('btk_pedal_config', JSON.stringify(pedalConfig));
+    }
+
+    async function initApp() {
+        loadPedalConfig();
+        loadPlaylistFromStorage();
+        await loadSongs();
+    }
+
+    async function loadSongs() {
+        try {
+            updateStatus('Buscando...', 'offline');
+            const response = await fetch(WEB_APP_URL);
+            if (!response.ok) throw new Error('Falha de rede');
+            
+            songsData = await response.json();
+
+            localStorage.setItem('btk_songs_manifest', JSON.stringify(songsData));
+            updateStatus('Online', 'online');
+            toastMessage.textContent = 'Músicas atualizadas com sucesso!';
+            await populateSelect(songsData);
+        } catch (error) {
+            const cached = localStorage.getItem('btk_songs_manifest');
+            if (cached) {
+                songsData = JSON.parse(cached);
+                updateStatus('Modo Offline', 'offline');
+                toastMessage.textContent = 'Modo Offline: Lista carregada do cache.';
+                await populateSelect(songsData);
+            } else {
+                updateStatus('Erro', 'offline');
+                toastMessage.textContent = 'Erro ao carregar repertório do servidor.';
+            }
+        }
+    }
+
+    async function populateSelect(list) {
+        trackSelect.innerHTML = '<option value="">-- Selecione uma música --</option>';
+        list.forEach((song, index) => {
+            const opt = document.createElement('option');
+            opt.value = index;
+            const hasFill = song.fillTracks && song.fillTracks.length > 0 ? ' [🪘 Virada]' : '';
+            const hasFim = song.endingTracks && song.endingTracks.length > 0 ? ' [🏁 Fim]' : '';
+            opt.textContent = `🎵 ${song.name} (${song.tracks.length} faixas)${hasFill}${hasFim}`;
+            trackSelect.appendChild(opt);
+        });
+        trackSelect.disabled = false;
+        await updateSelectCacheIndicators();
+    }
+
+    async function updateSelectCacheIndicators() {
+        try {
+            const cache = await caches.open(CACHE_NAME);
+            for (let i = 0; i < songsData.length; i++) {
+                const song = songsData[i];
+                let allCached = true;
+
+                const allTrackUrls = [
+                    ...song.tracks,
+                    ...(song.fillTracks || []),
+                    ...(song.endingTracks || [])
+                ];
+
+                for (const track of allTrackUrls) {
+                    const match = await cache.match(track.url);
+                    if (!match) { allCached = false; break; }
+                }
+
+                const option = trackSelect.options[i + 1];
+                if (option) {
+                    const hasFill = song.fillTracks && song.fillTracks.length > 0 ? ' [🪘 Virada]' : '';
+                    const hasFim = song.endingTracks && song.endingTracks.length > 0 ? ' [🏁 Fim]' : '';
+                    option.textContent = allCached 
+                        ? `✅ ${song.name} (${song.tracks.length} faixas)${hasFill}${hasFim}`
+                        : `🎵 ${song.name} (${song.tracks.length} faixas)${hasFill}${hasFim}`;
+                }
+            }
+        } catch (e){}
+    }
+
+    // CARREGA O ÁUDIO E O DECODIFICA EM UM BUFFER DA WEB AUDIO API (PERFECT SEAMLESS LOOP)
+    async function loadAudioBuffer(url) {
+        const ctx = getAudioContext();
+        const cache = await caches.open(CACHE_NAME);
+        let response = await cache.match(url);
+
+        if (!response) {
+            toastMessage.textContent = 'Baixando áudio para o cache local...';
+            response = await fetch(url);
+            if (response.ok) cache.put(url, response.clone());
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        return await ctx.decodeAudioData(arrayBuffer);
+    }
+
+    function updateSpeedDisplay() {
+        const percent = parseInt(speedSlider.value);
+        if (currentOriginalBpm) {
+            const calculatedBpm = Math.round(currentOriginalBpm * (percent / 100));
+            speedDisplay.textContent = `${calculatedBpm} BPM (${percent}%)`;
+        } else {
+            speedDisplay.textContent = `${percent}%`;
+        }
+    }
+
+    async function loadSongByIndex(index, presetStemStates = null, presetSpeed = null) {
+        stopAll();
+
+        if (index === '' || index < 0 || index >= songsData.length) {
+            btnPlay.disabled = true; btnStop.disabled = true; btnFill.disabled = true; btnAddPlaylist.disabled = true;
+            stemsContainer.innerHTML = '<div style="text-align: center; color: var(--subtext-color); font-size: 0.85rem;">Selecione uma música para carregar os canais.</div>';
+            return;
+        }
+
+        trackSelect.value = index;
+        const selectedSong = songsData[index];
+        currentOriginalBpm = selectedSong.originalBpm;
+
+        if (presetSpeed) speedSlider.value = presetSpeed;
+        updateSpeedDisplay();
+
+        btnPlay.disabled = true; btnStop.disabled = true; btnFill.disabled = true; btnAddPlaylist.disabled = true;
+        stemsContainer.innerHTML = '';
+        stemsData = []; fillData = []; endingData = []; currentStemStates = [];
+
+        try {
+            const ctx = getAudioContext();
+
+            for (let i = 0; i < selectedSong.tracks.length; i++) {
+                const track = selectedSong.tracks[i];
+                toastMessage.textContent = `Decodificando ${track.name} (${i + 1}/${selectedSong.tracks.length})...`;
+                
+                const buffer = await loadAudioBuffer(track.url);
+                const gainNode = ctx.createGain();
+                
+                const isInitialOn = presetStemStates ? presetStemStates[i] : true;
+                gainNode.gain.value = isInitialOn ? 1 : 0;
+                currentStemStates.push(isInitialOn);
+
+                gainNode.connect(ctx.destination);
+                stemsData.push({ name: track.name, buffer: buffer, gainNode: gainNode, sourceNode: null, isMuted: !isInitialOn });
+
+                const row = document.createElement('div');
+                row.className = 'stem-row';
+
+                const title = document.createElement('span');
+                title.className = 'stem-title';
+                title.textContent = track.name;
+
+                const toggleBtn = document.createElement('button');
+                toggleBtn.className = isInitialOn ? 'btn-toggle on' : 'btn-toggle off';
+                toggleBtn.textContent = isInitialOn ? 'ON' : 'OFF';
+
+                toggleBtn.addEventListener('click', () => {
+                    if (gainNode.gain.value > 0) {
+                        gainNode.gain.value = 0; toggleBtn.textContent = 'OFF'; toggleBtn.className = 'btn-toggle off';
+                        currentStemStates[i] = false;
+                    } else {
+                        gainNode.gain.value = 1; toggleBtn.textContent = 'ON'; toggleBtn.className = 'btn-toggle on';
+                        currentStemStates[i] = true;
+                    }
+                });
+
+                row.appendChild(title); row.appendChild(toggleBtn);
+                stemsContainer.appendChild(row);
+            }
+
+            masterDuration = stemsData[0].buffer.duration;
+
+            if (selectedSong.fillTracks && selectedSong.fillTracks.length > 0) {
+                for (let f = 0; f < selectedSong.fillTracks.length; f++) {
+                    const fillBuffer = await loadAudioBuffer(selectedSong.fillTracks[f].url);
+                    const fillGain = ctx.createGain();
+                    fillGain.connect(ctx.destination);
+                    fillData.push({ buffer: fillBuffer, gainNode: fillGain, sourceNode: null });
+                }
+                btnFill.disabled = false;
+            } else {
+                btnFill.disabled = true;
+            }
+
+            if (selectedSong.endingTracks && selectedSong.endingTracks.length > 0) {
+                for (let e = 0; e < selectedSong.endingTracks.length; e++) {
+                    const endBuffer = await loadAudioBuffer(selectedSong.endingTracks[e].url);
+                    const endGain = ctx.createGain();
+                    endGain.connect(ctx.destination);
+                    endingData.push({ buffer: endBuffer, gainNode: endGain, sourceNode: null });
+                }
+            }
+
+            btnPlay.disabled = false; btnStop.disabled = false; btnAddPlaylist.disabled = false;
+            toastMessage.textContent = `Pronto! ${selectedSong.name} carregado.`;
+            await updateSelectCacheIndicators();
+
+        } catch (err) {
+            toastMessage.textContent = 'Erro ao carregar e decodificar os canais.';
+            console.error(err);
+        }
+    }
+
+    trackSelect.addEventListener('change', (e) => {
+        loadSongByIndex(e.target.value);
+    });
+
+    btnAddPlaylist.addEventListener('click', () => {
+        const selectedIndex = trackSelect.value;
+        if (selectedIndex === '') return;
+
+        const song = songsData[selectedIndex];
+        playlist.push({
+            songIndex: selectedIndex,
+            name: song.name,
+            stemStates: [...currentStemStates],
+            speed: speedSlider.value
+        });
+
+        savePlaylistToStorage();
+        renderPlaylistUI();
+        toastMessage.textContent = `"${song.name}" adicionada à playlist!`;
+    });
+
+    // LIMPEZA SELETIVA DE CACHE
+    btnClearCache.addEventListener('click', async () => {
+        const selectedIndex = trackSelect.value;
+        if (selectedIndex === '') { 
+            toastMessage.textContent = 'Selecione uma música para limpar o cache.'; 
+            return; 
+        }
+
+        stopAll(); 
+        const selectedSong = songsData[selectedIndex];
+        
+        try {
+            const cache = await caches.open(CACHE_NAME);
+            let removedCount = 0;
+            const allTrackUrls = [
+                ...selectedSong.tracks,
+                ...(selectedSong.fillTracks || []),
+                ...(selectedSong.endingTracks || [])
+            ];
+
+            for (const track of allTrackUrls) {
+                if (await cache.delete(track.url)) removedCount++;
+            }
+
+            stemsData = []; fillData = []; endingData = [];
+            stemsContainer.innerHTML = '<div style="text-align: center; color: var(--subtext-color); font-size: 0.85rem;">Selecione uma música para carregar os canais.</div>';
+            btnPlay.disabled = true; btnStop.disabled = true; btnFill.disabled = true; btnAddPlaylist.disabled = true;
+            trackSelect.value = '';
+
+            await updateSelectCacheIndicators();
+            toastMessage.textContent = `Cache de "${selectedSong.name}" limpo! (${removedCount} arquivos removidos)`;
+        } catch (e){
+            toastMessage.textContent = 'Erro ao tentar limpar o cache.';
+        }
+    });
+
+    function savePlaylistToStorage() {
+        localStorage.setItem('btk_playlist_data', JSON.stringify(playlist));
+    }
+
+    function loadPlaylistFromStorage() {
+        const saved = localStorage.getItem('btk_playlist_data');
+        if (saved) {
+            try { playlist = JSON.parse(saved); renderPlaylistUI(); } catch(e){}
+        }
+    }
+
+    function renderPlaylistUI() {
+        const container = document.getElementById('playlistItems');
+        const badge = document.getElementById('playlistInfoBadge');
+
+        if (playlist.length === 0) {
+            container.innerHTML = '<div style="text-align: center; color: var(--subtext-color); font-size: 0.85rem; padding: 20px;">Sua playlist está vazia.<br>Selecione músicas no Player e clique em "Adicionar à Playlist".</div>';
+            badge.style.display = 'none';
+            return;
+        }
+
+        badge.style.display = 'block';
+        document.getElementById('playlistPosText').textContent = `${currentPlaylistIndex + 1} / ${playlist.length}`;
+
+        container.innerHTML = '';
+        playlist.forEach((item, index) => {
+            const row = document.createElement('div');
+            row.className = `playlist-item ${index === currentPlaylistIndex ? 'active' : ''}`;
+
+            const title = document.createElement('span');
+            title.className = 'playlist-item-title';
+            title.textContent = `${index + 1}. ${item.name} (${item.speed}%)`;
+
+            const actions = document.createElement('div');
+            actions.className = 'playlist-item-actions';
+
+            const btnPlayItem = document.createElement('button');
+            btnPlayItem.className = 'btn-mini';
+            btnPlayItem.textContent = '▶ Carregar';
+            btnPlayItem.onclick = () => loadPlaylistItem(index);
+
+            const btnUp = document.createElement('button');
+            btnUp.className = 'btn-mini'; btnUp.textContent = '▲';
+            btnUp.onclick = () => movePlaylistItem(index, -1);
+
+            const btnDown = document.createElement('button');
+            btnDown.className = 'btn-mini'; btnDown.textContent = '▼';
+            btnDown.onclick = () => movePlaylistItem(index, 1);
+
+            const btnDel = document.createElement('button');
+            btnDel.className = 'btn-mini'; btnDel.textContent = '✖';
+            btnDel.style.background = 'var(--error-color)';
+            btnDel.onclick = () => removePlaylistItem(index);
+
+            actions.appendChild(btnPlayItem);
+            actions.appendChild(btnUp);
+            actions.appendChild(btnDown);
+            actions.appendChild(btnDel);
+
+            row.appendChild(title);
+            row.appendChild(actions);
+            container.appendChild(row);
+        });
+    }
+
+    function movePlaylistItem(index, direction) {
+        const target = index + direction;
+        if (target < 0 || target >= playlist.length) return;
+        const temp = playlist[index];
+        playlist[index] = playlist[target];
+        playlist[target] = temp;
+        savePlaylistToStorage();
+        renderPlaylistUI();
+    }
+
+    function removePlaylistItem(index) {
+        playlist.splice(index, 1);
+        if (currentPlaylistIndex >= playlist.length) currentPlaylistIndex = playlist.length - 1;
+        savePlaylistToStorage();
+        renderPlaylistUI();
+    }
+
+    function clearPlaylist() {
+        playlist = []; currentPlaylistIndex = -1;
+        savePlaylistToStorage(); renderPlaylistUI();
+    }
+
+    async function loadPlaylistItem(index) {
+        if (index < 0 || index >= playlist.length) return;
+        currentPlaylistIndex = index;
+        renderPlaylistUI();
+        const item = playlist[index];
+        await loadSongByIndex(item.songIndex, item.stemStates, item.speed);
+    }
+
+    async function loadNextPlaylistItem() {
+        if (playlist.length === 0) return;
+        let nextIndex = currentPlaylistIndex + 1;
+        if (nextIndex >= playlist.length) nextIndex = 0;
+        await loadPlaylistItem(nextIndex);
+    }
+
+    btnFill.addEventListener('click', () => {
+        if (!isPlaying || fillData.length === 0) return;
+        if (!isFillArmed) {
+            isFillArmed = true; btnFill.classList.add('armed');
+            progressBarFill.classList.add('playing-fill');
+            btnFill.textContent = '⏳ VIRADA AGENDADA...';
+        } else {
+            isFillArmed = false; btnFill.classList.remove('armed');
+            progressBarFill.classList.remove('playing-fill');
+            btnFill.textContent = '🪘 VIRADA / FILL';
+        }
+    });
+
+    btnStop.addEventListener('click', () => {
+        if (isPlaying && endingData.length > 0 && !isEndingArmed) {
+            isEndingArmed = true; btnStop.classList.add('armed');
+            progressBarFill.classList.add('playing-ending');
+            btnStop.textContent = '⏳ FINALIZANDO...';
+        } else {
+            stopAll();
+        }
+    });
+
+    function playAll() {
+        if (stemsData.length === 0) return;
+        const ctx = getAudioContext();
+        const rate = parseInt(speedSlider.value) / 100;
+
+        startTime = ctx.currentTime - (startOffset / rate);
+
+        stemsData.forEach(stem => {
+            if (stem.sourceNode) { try { stem.sourceNode.stop(); } catch(e){} }
+            
+            const source = ctx.createBufferSource();
+            source.buffer = stem.buffer;
+            source.loop = true;
+            source.playbackRate.value = rate;
+            source.connect(stem.gainNode);
+            
+            const offset = startOffset % stem.buffer.duration;
+            source.start(0, offset);
+            stem.sourceNode = source;
+        });
+
+        isPlaying = true; 
+        btnPlay.textContent = 'PAUSE';
+        startSyncAndTimer();
+    }
+
+    function pauseAll() {
+        if (!isPlaying) return;
+        const ctx = getAudioContext();
+        const rate = parseInt(speedSlider.value) / 100;
+        
+        startOffset = (ctx.currentTime - startTime) * rate;
+
+        stemsData.forEach(stem => {
+            if (stem.sourceNode) {
+                try { stem.sourceNode.stop(); } catch(e){}
+                stem.sourceNode = null;
+            }
+        });
+
+        isPlaying = false;
+        btnPlay.textContent = 'PLAY';
+        stopSyncAndTimer();
+    }
+
+    function stopAll() {
+        stemsData.forEach(stem => {
+            if (stem.sourceNode) {
+                try { stem.sourceNode.stop(); } catch(e){}
+                stem.sourceNode = null;
+            }
+        });
+
+        fillData.forEach(fill => {
+            if (fill.sourceNode) {
+                try { fill.sourceNode.stop(); } catch(e){}
+                fill.sourceNode = null;
+            }
+        });
+
+        endingData.forEach(end => {
+            if (end.sourceNode) {
+                try { end.sourceNode.stop(); } catch(e){}
+                end.sourceNode = null;
+            }
+        });
+
+        isPlaying = false; isFillArmed = false; isFillPlaying = false;
+        isEndingArmed = false; isEndingPlaying = false;
+        startOffset = 0; currentLoopCount = 1;
+
+        btnFill.classList.remove('armed'); btnFill.textContent = '🪘 VIRADA / FILL';
+        btnStop.classList.remove('armed'); btnStop.textContent = 'STOP';
+        
+        progressBarFill.className = 'progress-bar-fill';
+        progressBarFill.style.width = '0%';
+
+        loopCounter.textContent = '1';
+        btnPlay.textContent = 'PLAY';
+        stopSyncAndTimer();
+        timerDisplay.textContent = '00:00.0'; lastMasterTime = 0;
+    }
+
+    btnPlay.addEventListener('click', () => { if (!isPlaying) playAll(); else pauseAll(); });
+
+    speedSlider.addEventListener('input', (e) => {
+        updateSpeedDisplay();
+        const rate = parseInt(e.target.value) / 100;
+        
+        if (isPlaying) {
+            const ctx = getAudioContext();
+            const currentPosition = (ctx.currentTime - startTime) * stemsData[0].sourceNode.playbackRate.value;
+            startTime = ctx.currentTime - (currentPosition / rate);
+
+            stemsData.forEach(stem => {
+                if (stem.sourceNode) stem.sourceNode.playbackRate.value = rate;
+            });
+            fillData.forEach(fill => {
+                if (fill.sourceNode) fill.sourceNode.playbackRate.value = rate;
+            });
+            endingData.forEach(end => {
+                if (end.sourceNode) end.sourceNode.playbackRate.value = rate;
+            });
+        }
+    });
+
+    function startSyncAndTimer() {
+        stopSyncAndTimer();
+        syncInterval = setInterval(() => {
+            if (!isPlaying || masterDuration === 0) return;
+
+            const ctx = getAudioContext();
+            const rate = parseInt(speedSlider.value) / 100;
+            const totalElapsed = (ctx.currentTime - startTime) * rate;
+            
+            const currentPosition = totalElapsed % masterDuration;
+            const newLoopCount = Math.floor(totalElapsed / masterDuration) + 1;
+
+            if (newLoopCount !== currentLoopCount && !isFillPlaying && !isEndingPlaying) {
+                currentLoopCount = newLoopCount;
+                loopCounter.textContent = currentLoopCount;
+
+                if (isEndingArmed) {
+                    dispararFinalizacao();
+                } else if (isFillArmed) {
+                    dispararVirada();
+                }
+            }
+
+            // Atualização da Barra Linear
+            const percent = (currentPosition / masterDuration) * 100;
+            progressBarFill.style.width = `${percent}%`;
+
+            // Tempo Regressivo
+            const remaining = Math.max(0, masterDuration - currentPosition);
+            const mins = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const secs = Math.floor(remaining % 60).toString().padStart(2, '0');
+            const ms = Math.floor((remaining % 1) * 10);
+            timerDisplay.textContent = `${mins}:${secs}.${ms}`;
+
+            lastMasterTime = currentPosition;
+        }, 50);
+    }
+
+    function dispararVirada() {
+        isFillArmed = false; isFillPlaying = true;
+        btnFill.classList.remove('armed'); 
+        progressBarFill.classList.remove('playing-fill');
+        btnFill.textContent = '🔥 TOCANDO VIRADA...';
+
+        const ctx = getAudioContext();
+        const rate = parseInt(speedSlider.value) / 100;
+
+        // Muta temporariamente os loops principais
+        stemsData.forEach(s => { if (s.sourceNode) s.sourceNode.muteVal = s.gainNode.gain.value; s.gainNode.gain.value = 0; });
+
+        fillData.forEach(fill => {
+            if (fill.sourceNode) { try { fill.sourceNode.stop(); } catch(e){} }
+            const source = ctx.createBufferSource();
+            source.buffer = fill.buffer;
+            source.playbackRate.value = rate;
+            source.connect(fill.gainNode);
+            source.start(0);
+            fill.sourceNode = source;
+        });
+
+        const masterFillNode = fillData[0].sourceNode;
+        masterFillNode.onended = () => {
+            isFillPlaying = false;
+            btnFill.textContent = '🪘 VIRADA / FILL';
+            
+            // Restaura o volume dos loops principais
+            stemsData.forEach(s => { s.gainNode.gain.value = s.isMuted ? 0 : 1; });
+        };
+    }
+
+    function dispararFinalizacao() {
+        isEndingArmed = false; isEndingPlaying = true;
+        btnStop.classList.remove('armed');
+        progressBarFill.classList.remove('playing-ending');
+
+        const ctx = getAudioContext();
+        const rate = parseInt(speedSlider.value) / 100;
+
+        // Para os loops principais
+        stemsData.forEach(s => { if (s.sourceNode) { try { s.sourceNode.stop(); } catch(e){} } });
+
+        endingData.forEach(end => {
+            if (end.sourceNode) { try { end.sourceNode.stop(); } catch(e){} }
+            const source = ctx.createBufferSource();
+            source.buffer = end.buffer;
+            source.playbackRate.value = rate;
+            source.connect(end.gainNode);
+            source.start(0);
+            end.sourceNode = source;
+        });
+
+        const masterEndingNode = endingData[0].sourceNode;
+        masterEndingNode.onended = () => {
+            stopAll();
+            if (playlist.length > 0) {
+                toastMessage.textContent = 'Finalização concluída. Carregando próxima música...';
+                loadNextPlaylistItem();
+            }
+        };
+    }
+
+    function stopSyncAndTimer() { if (syncInterval) clearInterval(syncInterval); }
+
+    function updateStatus(text, type) {
+        statusBadge.textContent = text;
+        statusBadge.className = `status-badge ${type}`;
+    }
+
+    function triggerAction(actionName) {
+        switch (actionName) {
+            case 'play': if (!btnPlay.disabled) btnPlay.click(); break;
+            case 'fill': if (!btnFill.disabled) btnFill.click(); break;
+            case 'stop': if (!btnStop.disabled) btnStop.click(); break;
+            case 'next_track': loadNextPlaylistItem(); break;
+            case 'speed_up':
+                speedSlider.value = Math.min(150, parseInt(speedSlider.value) + 5);
+                speedSlider.dispatchEvent(new Event('input'));
+                break;
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (document.activeElement === licenseKeyInput) return;
+        if (document.activeElement === trackSelect) trackSelect.blur();
+
+        const rawKey = e.key;
+        const key = rawKey.toLowerCase();
+
+        const testBox = document.getElementById('testPedalBox');
+        if (testBox) {
+            testBox.classList.add('active');
+            testBox.innerHTML = `✅ SINAL RECEBIDO! Tecla enviada pelo pedal: <b>"${rawKey}"</b> (code: ${e.code})`;
+            setTimeout(() => testBox.classList.remove('active'), 1200);
+        }
+
+        if ([' ', 'pagedown', 'pageup', 'arrowup', 'arrowdown'].includes(key)) {
+            e.preventDefault();
+        }
+
+        if (pedalConfig[key]) {
+            triggerAction(pedalConfig[key]);
+            return;
+        }
+
+        switch (key) {
+            case ' ':
+            case 'enter': triggerAction('play'); break;
+            case 'escape': triggerAction('stop'); break;
+            case 'v': triggerAction('fill'); break;
+        }
+    });
+
+    checkLicense();
+</script>
+</body>
+</html>
 
