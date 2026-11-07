@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA 🥁 MultiTrack Studio</title>
+    <title>Canto ETA 🎤🎸🥁 MultiTrack Studio</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -433,7 +433,6 @@
                 const urlLower = trackUrl.toLowerCase();
                 let detectedType = '';
                 
-                // Detecção robusta e blindada por nome/sufixo na URL
                 if (urlLower.includes('-loop') || urlLower.includes('loop') || urlLower.includes('-trk1')) {
                     detectedType = 'loop';
                     trackName = 'Loop Principal';
@@ -519,9 +518,10 @@
 
     function playAll() {
         if (stemsData.length === 0) return;
-        // Ativa o Wake Lock para manter a tela do celular ligada no palco/ensaio
-        solicitarWakeLock();
         
+        // Ativa o Wake Lock para manter a tela do celular acesa no palco/ensaio
+        solicitarWakeLock();
+
         const ctx = getAudioContext();
         startTime = ctx.currentTime - startOffset;
 
@@ -630,7 +630,6 @@
             const ctx = getAudioContext();
             const totalElapsed = ctx.currentTime - startTime;
 
-            // Se for o FIM tocando e o tempo estourar a duração do endingBuffer, encerra
             if (endingSourceNode && totalElapsed >= masterDuration) {
                 return; 
             }
@@ -726,8 +725,6 @@
         };
     }
 
-    let activeDuration = 0; // Nova variável para controlar a duração do áudio ativo (loop ou ending)
-
     function dispararFinalizacao() {
         isEndingArmed = false;
         btnStop.classList.remove('armed');
@@ -744,9 +741,8 @@
         source.start(0);
         endingSourceNode = source;
 
-        // Reseta o timer para contar a partir de agora com base no tamanho exato do arquivo de FIM
         startTime = ctx.currentTime;
-        masterDuration = endingBuffer.duration; // O timer agora foca na duração do Fim
+        masterDuration = endingBuffer.duration;
         loopCounter.textContent = `FIM`;
 
         source.onended = () => {
@@ -796,13 +792,14 @@
     });
 
     window.addEventListener('DOMContentLoaded', inicializarEstudio);
+
     // --- SUPORTE WAKE LOCK (Manter tela acesa) ---
     let wakeLock = null;
 
     async function solicitarWakeLock() {
         if ('wakeLock' in navigator) {
             try {
-                wakeLock = await navigator.requestWakeLock('screen');
+                wakeLock = await navigator.wakeLock.request('screen');
                 console.log('Screen Wake Lock ativo: a tela não vai apagar.');
                 
                 wakeLock.addEventListener('release', () => {
@@ -814,7 +811,6 @@
         }
     }
 
-    // Reaplica o bloqueio caso o usuário minimize o navegador e volte
     document.addEventListener('visibilitychange', async () => {
         if (wakeLock !== null && document.visibilityState === 'visible') {
             await solicitarWakeLock();
