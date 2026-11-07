@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA!! - Multi-Track Studio</title>
+    <title>Canto ETA - Multi-Track</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -106,10 +106,18 @@
             to { opacity: 0.75; transform: scale(0.98); }
         }
 
+        /* Caixa de Opção do Modo da Virada */
+        .fill-mode-box {
+            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+            padding: 8px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.85rem;
+        }
+        .fill-mode-box select { width: 130px; padding: 6px; font-size: 0.8rem; }
+
         .stems-container {
             display: flex; flex-direction: column; gap: 8px;
             background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.1); max-height: 180px; overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.1); max-height: 160px; overflow-y: auto;
         }
 
         .stem-row {
@@ -173,6 +181,15 @@
             <div class="progress-bar-bg">
                 <div id="progressBarFill" class="progress-bar-fill"></div>
             </div>
+        </div>
+
+        <!-- Seletor do Modo da Virada -->
+        <div class="fill-mode-box">
+            <span>🪘 Modo da Virada:</span>
+            <select id="fillModeSelect" onchange="saveFillMode()">
+                <option value="quantized">Esperar Ciclo</option>
+                <option value="instant">Instantâneo</option>
+            </select>
         </div>
 
         <div class="player-controls">
@@ -255,6 +272,7 @@
     const loopCounter = document.getElementById('loopCounter');
     const progressBarFill = document.getElementById('progressBarFill');
     const toastMessage = document.getElementById('toastMessage');
+    const fillModeSelect = document.getElementById('fillModeSelect');
 
     let audioCtx = null;
     function getAudioContext() {
@@ -282,7 +300,8 @@
     let currentLoopCount = 1;
     let syncInterval = null;
 
-    // Configuração padrão dos pedais
+    let fillMode = 'quantized'; // 'quantized' (Espera o ciclo) ou 'instant' (Instantâneo)
+
     let pedalConfig = {
         'pageup': 'stop',
         'pagedown': 'play',
@@ -303,16 +322,22 @@
         }
     }
 
-    function loadPedalConfig() {
-        const saved = localStorage.getItem('btk_pedal_config');
-        if (saved) {
+    function loadConfigs() {
+        const savedPedal = localStorage.getItem('btk_pedal_config');
+        if (savedPedal) {
             try {
-                pedalConfig = JSON.parse(saved);
+                pedalConfig = JSON.parse(savedPedal);
                 document.getElementById('actionPedalA').value = pedalConfig['pageup'] || 'stop';
                 document.getElementById('actionPedalB').value = pedalConfig['pagedown'] || 'play';
                 document.getElementById('actionPedalC').value = pedalConfig[' '] || 'fill';
                 document.getElementById('actionPedalD').value = pedalConfig['enter'] || 'stop';
             } catch(e){}
+        }
+
+        const savedMode = localStorage.getItem('btk_fill_mode');
+        if (savedMode) {
+            fillMode = savedMode;
+            fillModeSelect.value = savedMode;
         }
     }
 
@@ -324,6 +349,11 @@
             'enter': document.getElementById('actionPedalD').value
         };
         localStorage.setItem('btk_pedal_config', JSON.stringify(pedalConfig));
+    }
+
+    function saveFillMode() {
+        fillMode = fillModeSelect.value;
+        localStorage.setItem('btk_fill_mode', fillMode);
     }
 
     function normalizarUrl(url) {
@@ -349,7 +379,7 @@
     }
 
     async function inicializarEstudio() {
-        loadPedalConfig();
+        loadConfigs();
         if (!stemsEncoded) {
             toastMessage.textContent = 'Nenhum stem fornecido.';
             return;
@@ -486,16 +516,24 @@
 
     btnPlay.addEventListener('click', () => { if (!isPlaying) playAll(); else pauseAll(); });
 
+    // AÇÃO DO BOTÃO VIRA / FILL
     btnFill.addEventListener('click', () => {
-        if (!isPlaying || !fillBuffer) return;
-        if (!isFillArmed) {
-            isFillArmed = true;
-            btnFill.classList.add('armed');
-            btnFill.textContent = '⏳ VIRA AGENDADA...';
+        if (!isPlaying || !fillBuffer || isFillPlaying) return;
+
+        if (fillMode === 'instant') {
+            // MODO INSTANTÂNEO: Dispara imediatamente
+            dispararViradaInstantanea();
         } else {
-            isFillArmed = false;
-            btnFill.classList.remove('armed');
-            btnFill.textContent = '🪘 VIRA / FILL';
+            // MODO QUANTIZADO (Espera o ciclo)
+            if (!isFillArmed) {
+                isFillArmed = true;
+                btnFill.classList.add('armed');
+                btnFill.textContent = '⏳ VIRA AGENDADA...';
+            } else {
+                isFillArmed = false;
+                btnFill.classList.remove('armed');
+                btnFill.textContent = '🪘 VIRA / FILL';
+            }
         }
     });
 
@@ -524,8 +562,8 @@
 
                 if (isEndingArmed) {
                     dispararFinalizacao();
-                } else if (isFillArmed) {
-                    dispararVirada();
+                } else if (isFillArmed && fillMode === 'quantized') {
+                    dispararViradaQuantizada();
                 }
             }
 
@@ -540,8 +578,10 @@
         }, 50);
     }
 
-    function dispararVirada() {
+    // VIRA NO MODO QUANTIZADO (Espera fechar o ciclo atual)
+    function dispararViradaQuantizada() {
         isFillArmed = false;
+        isFillPlaying = true;
         btnFill.classList.remove('armed');
         btnFill.textContent = '🔥 TOCANDO VIRA...';
 
@@ -556,8 +596,57 @@
         fillSourceNode = source;
 
         source.onended = () => {
+            isFillPlaying = false;
             btnFill.textContent = '🪘 VIRA / FILL';
             stemsData.forEach(s => { s.gainNode.gain.value = 1; });
+        };
+    }
+
+    // VIRA NO MODO INSTANTÂNEO (Executa na hora exata do comando, sem saltar o tempo da música)
+    function dispararViradaInstantanea() {
+        isFillPlaying = true;
+        btnFill.textContent = '🔥 TOCANDO VIRA...';
+
+        const ctx = getAudioContext();
+        
+        // 1. Calcula exatamente em qual segundo do loop a música estava
+        const totalElapsed = ctx.currentTime - startTime;
+        const currentPosition = totalElapsed % masterDuration;
+
+        // 2. Para os loops principais instantaneamente
+        stemsData.forEach(s => {
+            if (s.sourceNode) {
+                try { s.sourceNode.stop(); } catch(e){}
+                s.sourceNode = null;
+            }
+        });
+
+        // 3. Toca o Buffer do Vira
+        if (fillSourceNode) { try { fillSourceNode.stop(); } catch(e){} }
+        const source = ctx.createBufferSource();
+        source.buffer = fillBuffer;
+        source.connect(fillGainNode);
+        source.start(0);
+        fillSourceNode = source;
+
+        // 4. Assim que o vira termina, o loop principal retoma do ponto correspondente em perfeito sincronismo
+        source.onended = () => {
+            isFillPlaying = false;
+            btnFill.textContent = '🪘 VIRA / FILL';
+
+            if (!isPlaying) return; // Se o usuário deu stop geral durante o vira
+
+            // Avança o startTime proporcionalmente para que o loop continue exatamente no compasso correto
+            startTime = ctx.currentTime - currentPosition;
+
+            stemsData.forEach(stem => {
+                const src = ctx.createBufferSource();
+                src.buffer = stem.buffer;
+                src.loop = true;
+                src.connect(stem.gainNode);
+                src.start(0, currentPosition % stem.buffer.duration);
+                stem.sourceNode = src;
+            });
         };
     }
 
@@ -583,7 +672,6 @@
 
     function stopSyncAndTimer() { if (syncInterval) clearInterval(syncInterval); }
 
-    // SUPORTE AO PEDAL MIDI (M-VAVE CHOCOLATE PLUS VIA TECLADO)
     function triggerAction(actionName) {
         switch (actionName) {
             case 'play': if (!btnPlay.disabled) btnPlay.click(); break;
@@ -596,7 +684,6 @@
         const rawKey = e.key;
         const key = rawKey.toLowerCase();
 
-        // Caixa de teste visual na aba de pedal
         const testBox = document.getElementById('testPedalBox');
         if (testBox) {
             testBox.classList.add('active');
@@ -613,7 +700,6 @@
             return;
         }
 
-        // Atalhos de segurança universais do teclado
         switch (key) {
             case ' ':
             case 'enter': triggerAction('play'); break;
