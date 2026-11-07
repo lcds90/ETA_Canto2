@@ -519,6 +519,9 @@
 
     function playAll() {
         if (stemsData.length === 0) return;
+        // Ativa o Wake Lock para manter a tela do celular ligada no palco/ensaio
+        solicitarWakeLock();
+        
         const ctx = getAudioContext();
         startTime = ctx.currentTime - startOffset;
 
@@ -793,6 +796,30 @@
     });
 
     window.addEventListener('DOMContentLoaded', inicializarEstudio);
+    // --- SUPORTE WAKE LOCK (Manter tela acesa) ---
+    let wakeLock = null;
+
+    async function solicitarWakeLock() {
+        if ('wakeLock' in navigator) {
+            try {
+                wakeLock = await navigator.requestWakeLock('screen');
+                console.log('Screen Wake Lock ativo: a tela não vai apagar.');
+                
+                wakeLock.addEventListener('release', () => {
+                    console.log('Screen Wake Lock foi liberado.');
+                });
+            } catch (err) {
+                console.error(`Erro ao ativar Wake Lock: ${err.name}, ${err.message}`);
+            }
+        }
+    }
+
+    // Reaplica o bloqueio caso o usuário minimize o navegador e volte
+    document.addEventListener('visibilitychange', async () => {
+        if (wakeLock !== null && document.visibilityState === 'visible') {
+            await solicitarWakeLock();
+        }
+    });
 </script>
 </body>
 </html>
