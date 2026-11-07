@@ -683,37 +683,37 @@
                 const cols = inlineSplitCSV(linha);
                 const id = cols[0]?.replace(/"/g, '') || ('item-'+index);
                 
-let extraTracks = [];
-
-// 1. Coluna H (índice 7) -> Loop Principal (-loop)
-if (cols[7] && cols[7].replace(/"/g, '').trim().length > 5) {
-    extraTracks.push({ name: 'Loop Principal', url: cols[7].replace(/"/g, '').trim(), type: 'trk1' });
-}
-// 2. Coluna I (índice 8) -> Fill 1 (-fill1)
-if (cols[8] && cols[8].replace(/"/g, '').trim().length > 5) {
-    extraTracks.push({ name: 'Fill 1', url: cols[8].replace(/"/g, '').trim(), type: 'fill1' });
-}
-// 3. Coluna J (índice 9) -> Fill 2 (-fill2)
-if (cols[9] && cols[9].replace(/"/g, '').trim().length > 5) {
-    extraTracks.push({ name: 'Fill 2', url: cols[9].replace(/"/g, '').trim(), type: 'fill2' });
-}
-// 4. Coluna K (índice 10) -> Fill 3 (-fill3)
-if (cols[10] && cols[10].replace(/"/g, '').trim().length > 5) {
-    extraTracks.push({ name: 'Fill 3', url: cols[10].replace(/"/g, '').trim(), type: 'fill3' });
-}
-// 5. Coluna L (índice 11) -> Finalização (-fim)
-if (cols[11] && cols[11].replace(/"/g, '').trim().length > 5) {
-    extraTracks.push({ name: 'Fim (Stop)', url: cols[11].replace(/"/g, '').trim(), type: 'ending' });
-}
-
-
                 dadosMap[id] = {
-                    id: id, cantor: cols[1]?.replace(/"/g, '') || '',
+                    id: id, 
+                    cantor: cols[1]?.replace(/"/g, '') || '',
                     musica: cols[2]?.replace(/"/g, '') || '',
                     media: cols[3]?.replace(/"/g, '').trim() || '',
                     tipo: (cols[4]?.replace(/"/g, '') || '').toLowerCase().trim(),
                     notes: cols[5]?.replace(/"/g, '') || '',
-                    stems: extraTracks
+                    stems: (() => {
+                        let extraTracks = [];
+                        // 1. Coluna G (índice 6) -> Loop Principal (-loop)
+                        if (cols[6] && cols[6].replace(/"/g, '').trim().length > 5) {
+                            extraTracks.push({ name: 'Loop Principal', url: cols[6].replace(/"/g, '').trim(), type: 'trk1' });
+                        }
+                        // 2. Coluna H (índice 7) -> Fill 1 (-fill1)
+                        if (cols[7] && cols[7].replace(/"/g, '').trim().length > 5) {
+                            extraTracks.push({ name: 'Fill 1', url: cols[7].replace(/"/g, '').trim(), type: 'fill1' });
+                        }
+                        // 3. Coluna I (índice 8) -> Fill 2 (-fill2)
+                        if (cols[8] && cols[8].replace(/"/g, '').trim().length > 5) {
+                            extraTracks.push({ name: 'Fill 2', url: cols[8].replace(/"/g, '').trim(), type: 'fill2' });
+                        }
+                        // 4. Coluna J (índice 9) -> Fill 3 (-fill3)
+                        if (cols[9] && cols[9].replace(/"/g, '').trim().length > 5) {
+                            extraTracks.push({ name: 'Fill 3', url: cols[9].replace(/"/g, '').trim(), type: 'fill3' });
+                        }
+                        // 5. Coluna K (índice 10) -> Finalização (-fim)
+                        if (cols[10] && cols[10].replace(/"/g, '').trim().length > 5) {
+                            extraTracks.push({ name: 'Fim (Stop)', url: cols[10].replace(/"/g, '').trim(), type: 'ending' });
+                        }
+                        return extraTracks;
+                    })()
                 };
             });
             dadosGlobaisPlanilha = dadosMap;
