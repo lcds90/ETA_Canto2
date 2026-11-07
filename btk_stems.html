@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - Multi-Track Studio</title>
+    <title>Canto ETA // Multi-Track Studio</title>
     <style>
         :root {
             --bg-color: #121212;
             --card-bg: rgba(20, 20, 20, 0.9);
             --accent-color: #ff9800;
-            --fill-color: #e91e63;
-            --ending-color: #9c27b0;
+            --fill-color-1: #e91e63;
+            --fill-color-2: #9c27b0;
+            --fill-color-3: #3f51b5;
+            --ending-color: #f44336;
             --text-color: #ffffff;
             --subtext-color: #b0b0b0;
             --success-color: #4caf50;
-            --error-color: #f44336;
             --btn-off: #424242;
         }
 
@@ -83,49 +84,44 @@
         .progress-bar-bg { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
         .progress-bar-fill { height: 100%; width: 0%; background: var(--accent-color); transition: width 0.05s linear; }
 
-        .player-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .options-row { display: flex; gap: 8px; justify-content: space-between; font-size: 0.8rem; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); align-items: center; }
+        .options-row select { width: 110px; padding: 4px; font-size: 0.75rem; }
+
+        .player-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
         button {
-            padding: 14px; font-size: 0.95rem; font-weight: bold;
+            padding: 12px; font-size: 0.9rem; font-weight: bold;
             border: none; border-radius: 10px; cursor: pointer; text-transform: uppercase; transition: 0.2s;
         }
         button:disabled { opacity: 0.4; cursor: not-allowed; }
 
         .btn-play { background: #4caf50; color: #fff; }
-        .btn-stop { background: rgba(220, 20, 20, 0.85); color: #fff; }
+        .btn-stop { background: rgba(220, 20, 20, 0.85); color: #fff; grid-column: span 2; }
         .btn-stop.armed { background: var(--ending-color); animation: pulse 0.8s infinite alternate; }
         
-        .btn-fill {
-            background: var(--fill-color); color: #fff;
-            grid-column: span 2; font-size: 1rem;
-        }
-        .btn-fill.armed { animation: pulse 0.8s infinite alternate; background: #ff5252; }
+        .btn-fill-1 { background: var(--fill-color-1); color: #fff; }
+        .btn-fill-2 { background: var(--fill-color-2); color: #fff; }
+        .btn-fill-3 { background: var(--fill-color-3); color: #fff; }
+        .btn-fill.armed { animation: pulse 0.8s infinite alternate; background: #ff5252 !important; }
 
         @keyframes pulse {
             from { opacity: 1; transform: scale(1); }
             to { opacity: 0.75; transform: scale(0.98); }
         }
 
-        .fill-mode-box {
-            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
-            padding: 8px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;
-            font-size: 0.85rem;
-        }
-        .fill-mode-box select { width: 130px; padding: 6px; font-size: 0.8rem; }
-
         .stems-container {
-            display: flex; flex-direction: column; gap: 8px;
-            background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.1); max-height: 160px; overflow-y: auto;
+            display: flex; flex-direction: column; gap: 6px;
+            background: rgba(0,0,0,0.3); padding: 8px; border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1); max-height: 130px; overflow-y: auto;
         }
 
         .stem-row {
             display: flex; justify-content: space-between; align-items: center;
-            background: rgba(255,255,255,0.08); padding: 8px 12px; border-radius: 8px;
+            background: rgba(255,255,255,0.08); padding: 6px 10px; border-radius: 6px;
         }
-        .stem-title { font-size: 0.85rem; font-weight: bold; }
+        .stem-title { font-size: 0.8rem; font-weight: bold; }
 
-        .btn-toggle { padding: 6px 12px; font-size: 0.75rem; border-radius: 6px; min-width: 55px; }
+        .btn-toggle { padding: 4px 10px; font-size: 0.7rem; border-radius: 6px; min-width: 50px; }
         .btn-toggle.on { background: var(--success-color); color: #fff; }
         .btn-toggle.off { background: var(--btn-off); color: var(--subtext-color); }
 
@@ -140,12 +136,12 @@
         .pedal-key-badge { font-size: 0.65rem; background: #333; padding: 2px 4px; border-radius: 4px; color: var(--subtext-color); }
         
         select {
-            width: 100%; padding: 10px; font-size: 0.85rem;
+            width: 100%; padding: 8px; font-size: 0.8rem;
             background: #2a2a2a; color: var(--text-color);
             border: 1px solid #444; border-radius: 8px; outline: none; cursor: pointer;
         }
         .test-box {
-            background: rgba(0,0,0,0.4); border: 2px dashed rgba(255,255,255,0.2); padding: 12px;
+            background: rgba(0,0,0,0.4); border: 2px dashed rgba(255,255,255,0.2); padding: 10px;
             border-radius: 8px; text-align: center; font-size: 0.8rem; color: var(--subtext-color);
         }
         .test-box.active { border-color: var(--success-color); color: var(--success-color); font-weight: bold; background: rgba(76, 175, 80, 0.1); }
@@ -181,22 +177,30 @@
             </div>
         </div>
 
-        <div class="fill-mode-box">
-            <span>🪘 Modo da Virada:</span>
-            <select id="fillModeSelect" onchange="saveFillMode()">
-                <option value="quantized">Esperar Ciclo</option>
-                <option value="instant">Instantâneo</option>
-            </select>
+        <div class="options-row">
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <input type="checkbox" id="chkLoopAtivo" checked onchange="toggleLoopState()" style="width: 16px; height: 16px; accent-color: var(--accent-color);">
+                <span>🔄 Repetir Loop (Trk1)</span>
+            </label>
+            <div>
+                <span>Modo Vira:</span>
+                <select id="fillModeSelect" onchange="saveFillMode()">
+                    <option value="quantized">Ciclo</option>
+                    <option value="instant">Instant</option>
+                </select>
+            </div>
         </div>
 
         <div class="player-controls">
             <button id="btnPlay" class="btn-play" disabled>▶ LOOP</button>
-            <button id="btnStop" class="btn-stop" disabled>■ STOP</button>
-            <button id="btnFill" class="btn-fill" disabled>🪘 VIRA / FILL</button>
+            <button id="btnFill1" class="btn-fill-1 btn-fill" style="display:none;" disabled>🪘 FILL 1</button>
+            <button id="btnFill2" class="btn-fill-2 btn-fill" style="display:none;" disabled>🥁 FILL 2</button>
+            <button id="btnFill3" class="btn-fill-3 btn-fill" style="display:none;" disabled>🔥 FILL 3</button>
+            <button id="btnStop" class="btn-stop" disabled>■ STOP / FIM</button>
         </div>
 
         <div id="stemsContainer" class="stems-container">
-            <div style="text-align: center; color: var(--subtext-color); font-size: 0.85rem;">Carregando canais do GitHub...</div>
+            <div style="text-align: center; color: var(--subtext-color); font-size: 0.8rem;">Carregando canais do GitHub...</div>
         </div>
 
         <div id="toastMessage" class="toast">Aguardando carregamento dos buffers...</div>
@@ -214,7 +218,9 @@
                 <select id="actionPedalA" onchange="savePedalConfig()">
                     <option value="stop">⏹ Stop / Fim</option>
                     <option value="play">▶ Play / Loop</option>
-                    <option value="fill">🪘 Vira / Fill</option>
+                    <option value="fill1">🪘 Fill 1</option>
+                    <option value="fill2">🥁 Fill 2</option>
+                    <option value="fill3">🔥 Fill 3</option>
                 </select>
             </div>
 
@@ -222,7 +228,9 @@
                 <div class="pedal-title"><span>PEDAL B</span><span class="pedal-key-badge">PageDown</span></div>
                 <select id="actionPedalB" onchange="savePedalConfig()">
                     <option value="play">▶ Play / Loop</option>
-                    <option value="fill">🪘 Vira / Fill</option>
+                    <option value="fill1">🪘 Fill 1</option>
+                    <option value="fill2">🥁 Fill 2</option>
+                    <option value="fill3">🔥 Fill 3</option>
                     <option value="stop">⏹ Stop / Fim</option>
                 </select>
             </div>
@@ -230,7 +238,9 @@
             <div class="pedal-card">
                 <div class="pedal-title"><span>PEDAL C</span><span class="pedal-key-badge">Espaço</span></div>
                 <select id="actionPedalC" onchange="savePedalConfig()">
-                    <option value="fill">🪘 Vira / Fill</option>
+                    <option value="fill1">🪘 Fill 1</option>
+                    <option value="fill2">🥁 Fill 2</option>
+                    <option value="fill3">🔥 Fill 3</option>
                     <option value="play">▶ Play / Loop</option>
                     <option value="stop">⏹ Stop / Fim</option>
                 </select>
@@ -241,7 +251,9 @@
                 <select id="actionPedalD" onchange="savePedalConfig()">
                     <option value="stop">⏹ Stop / Fim</option>
                     <option value="play">▶ Play / Loop</option>
-                    <option value="fill">🪘 Vira / Fill</option>
+                    <option value="fill1">🪘 Fill 1</option>
+                    <option value="fill2">🥁 Fill 2</option>
+                    <option value="fill3">🔥 Fill 3</option>
                 </select>
             </div>
         </div>
@@ -263,13 +275,16 @@
 
     const btnPlay = document.getElementById('btnPlay');
     const btnStop = document.getElementById('btnStop');
-    const btnFill = document.getElementById('btnFill');
+    const btnFill1 = document.getElementById('btnFill1');
+    const btnFill2 = document.getElementById('btnFill2');
+    const btnFill3 = document.getElementById('btnFill3');
     const stemsContainer = document.getElementById('stemsContainer');
     const timerDisplay = document.getElementById('timerDisplay');
     const loopCounter = document.getElementById('loopCounter');
     const progressBarFill = document.getElementById('progressBarFill');
     const toastMessage = document.getElementById('toastMessage');
     const fillModeSelect = document.getElementById('fillModeSelect');
+    const chkLoopAtivo = document.getElementById('chkLoopAtivo');
 
     let audioCtx = null;
     function getAudioContext() {
@@ -279,14 +294,16 @@
     }
 
     let stemsData = [];
-    let fillBuffer = null;
+    let fillBuffers = { 1: null, 2: null, 3: null };
+    let fillGainNodes = { 1: null, 2: null, 3: null };
+    let activeFillSource = null;
     let endingBuffer = null;
-    let fillGainNode = null;
     let endingGainNode = null;
-    let fillSourceNode = null;
     let endingSourceNode = null;
 
     let isPlaying = false;
+    let isLoopEnabled = true;
+    let activeFillIndex = 0;
     let isFillArmed = false;
     let isFillPlaying = false;
     let isEndingArmed = false;
@@ -302,7 +319,7 @@
     let pedalConfig = {
         'pageup': 'stop',
         'pagedown': 'play',
-        ' ': 'fill',
+        ' ': 'fill1',
         'enter': 'stop'
     };
 
@@ -326,7 +343,7 @@
                 pedalConfig = JSON.parse(savedPedal);
                 document.getElementById('actionPedalA').value = pedalConfig['pageup'] || 'stop';
                 document.getElementById('actionPedalB').value = pedalConfig['pagedown'] || 'play';
-                document.getElementById('actionPedalC').value = pedalConfig[' '] || 'fill';
+                document.getElementById('actionPedalC').value = pedalConfig[' '] || 'fill1';
                 document.getElementById('actionPedalD').value = pedalConfig['enter'] || 'stop';
             } catch(e){}
         }
@@ -351,6 +368,13 @@
     function saveFillMode() {
         fillMode = fillModeSelect.value;
         localStorage.setItem('btk_fill_mode', fillMode);
+    }
+
+    function toggleLoopState() {
+        isLoopEnabled = chkLoopAtivo.checked;
+        stemsData.forEach(s => {
+            if (s.sourceNode) s.sourceNode.loop = isLoopEnabled;
+        });
     }
 
     function normalizarUrl(url) {
@@ -388,19 +412,22 @@
             stemsContainer.innerHTML = '';
             stemsData = [];
 
+            // Mapeamento exato: 
+            // 0 -> H (Trk1 Loop)
+            // 1 -> I (Fill 1)
+            // 2 -> J (Fill 2)
+            // 3 -> K (Fill 3)
+            // 4 -> L (Trk3 Fim / Stop)
             for (let i = 0; i < rawStems.length; i++) {
                 let trackUrl = '';
-                let trackType = '';
                 let trackName = '';
 
                 if (typeof rawStems[i] === 'object' && rawStems[i] !== null) {
                     trackUrl = rawStems[i].url;
-                    trackType = rawStems[i].type || (i === 0 ? 'trk1' : i === 1 ? 'trk2' : 'trk3');
-                    trackName = rawStems[i].name || (i === 0 ? 'Trk1 (Loop)' : i === 1 ? 'Trk2 (Fill)' : 'Trk3 (Fim)');
+                    trackName = rawStems[i].name || (`Track ${i+1}`);
                 } else {
                     trackUrl = rawStems[i];
-                    trackType = (i === 0 ? 'trk1' : i === 1 ? 'trk2' : 'trk3');
-                    trackName = (i === 0 ? 'Trk1 (Loop)' : i === 1 ? 'Trk2 (Fill)' : 'Trk3 (Fim)');
+                    trackName = i === 0 ? 'Loop (Trk1)' : i === 1 ? 'Fill 1' : i === 2 ? 'Fill 2' : i === 3 ? 'Fill 3' : 'Fim (Stop)';
                 }
 
                 if (!trackUrl || trackUrl.length < 5) continue;
@@ -411,8 +438,9 @@
                 gainNode.gain.value = 1;
                 gainNode.connect(ctx.destination);
 
-                if (trackType === 'trk1' || (i === 0 && !stemsData.some(s => s.type === 'trk1'))) {
-                    stemsData.push({ name: trackName, buffer: buffer, gainNode: gainNode, sourceNode: null, isMuted: false, type: 'trk1' });
+                if (i === 0) {
+                    // Coluna H: Loop Principal
+                    stemsData.push({ name: trackName, buffer: buffer, gainNode: gainNode, sourceNode: null, type: 'trk1' });
 
                     const row = document.createElement('div');
                     row.className = 'stem-row';
@@ -429,14 +457,19 @@
                     };
                     row.appendChild(toggleBtn);
                     stemsContainer.appendChild(row);
-                } else if (trackType === 'trk2' || i === 1) {
-                    fillBuffer = buffer;
-                    fillGainNode = gainNode;
-                    btnFill.disabled = false;
-                } else if (trackType === 'trk3' || i === 2) {
+                } else if (i >= 1 && i <= 3) {
+                    // Colunas I, J, K: Fills 1, 2 e 3
+                    const fillIdx = i;
+                    fillBuffers[fillIdx] = buffer;
+                    fillGainNodes[fillIdx] = gainNode;
+                    
+                    if (fillIdx === 1) btnFill1.style.display = 'block';
+                    if (fillIdx === 2) btnFill2.style.display = 'block';
+                    if (fillIdx === 3) btnFill3.style.display = 'block';
+                } else if (i >= 4) {
+                    // Coluna L: Finalização (Stop)
                     endingBuffer = buffer;
                     endingGainNode = gainNode;
-                    btnStop.disabled = false;
                 }
             }
 
@@ -444,6 +477,9 @@
                 masterDuration = stemsData[0].buffer.duration;
                 btnPlay.disabled = false;
                 btnStop.disabled = false;
+                if (fillBuffers[1]) btnFill1.disabled = false;
+                if (fillBuffers[2]) btnFill2.disabled = false;
+                if (fillBuffers[3]) btnFill3.disabled = false;
                 toastMessage.textContent = 'Pronto para tocar!';
             } else {
                 toastMessage.textContent = 'Nenhum loop principal (Trk1) encontrado.';
@@ -464,9 +500,16 @@
             if (stem.sourceNode) { try { stem.sourceNode.stop(); } catch(e){} }
             const source = ctx.createBufferSource();
             source.buffer = stem.buffer;
-            source.loop = true;
+            source.loop = isLoopEnabled;
             source.connect(stem.gainNode);
             source.start(0, startOffset % stem.buffer.duration);
+            
+            source.onended = () => {
+                if (!isLoopEnabled && isPlaying && stem.type === 'trk1' && !isFillPlaying) {
+                    stopAll();
+                }
+            };
+
             stem.sourceNode = source;
         });
 
@@ -496,14 +539,21 @@
         stemsData.forEach(stem => {
             if (stem.sourceNode) { try { stem.sourceNode.stop(); } catch(e){} stem.sourceNode = null; }
         });
-        if (fillSourceNode) { try { fillSourceNode.stop(); } catch(e){} fillSourceNode = null; }
+        Object.values(fillBuffers).forEach((_, idx) => {
+            // para sources de fill se houver
+        });
+        if (activeFillSource) { try { activeFillSource.stop(); } catch(e){} activeFillSource = null; }
         if (endingSourceNode) { try { endingSourceNode.stop(); } catch(e){} endingSourceNode = null; }
 
         isPlaying = false; isFillArmed = false; isFillPlaying = false; isEndingArmed = false;
         startOffset = 0; currentLoopCount = 1;
 
-        btnFill.classList.remove('armed'); btnFill.textContent = '🪘 VIRA / FILL';
-        btnStop.classList.remove('armed'); btnStop.textContent = '■ STOP';
+        [btnFill1, btnFill2, btnFill3].forEach(b => { b.classList.remove('armed'); });
+        if(btnFill1) btnFill1.textContent = '🪘 FILL 1';
+        if(btnFill2) btnFill2.textContent = '🥁 FILL 2';
+        if(btnFill3) btnFill3.textContent = '🔥 FILL 3';
+        
+        btnStop.classList.remove('armed'); btnStop.textContent = '■ STOP / FIM';
         progressBarFill.style.width = '0%';
         loopCounter.textContent = 'Loop: 1';
         btnPlay.textContent = '▶ LOOP';
@@ -513,23 +563,30 @@
 
     btnPlay.addEventListener('click', () => { if (!isPlaying) playAll(); else pauseAll(); });
 
-    btnFill.addEventListener('click', () => {
-        if (!isPlaying || !fillBuffer || isFillPlaying) return;
+    // Funções de Disparo de Fills (1, 2 ou 3)
+    function dispararFill(fillNum) {
+        if (!isPlaying || !fillBuffers[fillNum] || isFillPlaying) return;
+        activeFillIndex = fillNum;
 
         if (fillMode === 'instant') {
-            dispararViradaInstantanea();
+            executarFillInstantaneo(fillNum);
         } else {
+            const btnTarget = fillNum === 1 ? btnFill1 : fillNum === 2 ? btnFill2 : btnFill3;
             if (!isFillArmed) {
                 isFillArmed = true;
-                btnFill.classList.add('armed');
-                btnFill.textContent = '⏳ VIRA AGENDADA...';
+                btnTarget.classList.add('armed');
+                btnTarget.textContent = `⏳ FILL ${fillNum}...`;
             } else {
                 isFillArmed = false;
-                btnFill.classList.remove('armed');
-                btnFill.textContent = '🪘 VIRA / FILL';
+                btnTarget.classList.remove('armed');
+                btnTarget.textContent = `🪘 FILL ${fillNum}`;
             }
         }
-    });
+    }
+
+    btnFill1.addEventListener('click', () => dispararFill(1));
+    btnFill2.addEventListener('click', () => dispararFill(2));
+    btnFill3.addEventListener('click', () => dispararFill(3));
 
     btnStop.addEventListener('click', () => {
         if (isPlaying && endingBuffer && !isEndingArmed) {
@@ -557,7 +614,7 @@
                 if (isEndingArmed) {
                     dispararFinalizacao();
                 } else if (isFillArmed && fillMode === 'quantized') {
-                    dispararViradaQuantizada();
+                    executarFillQuantizado(activeFillIndex);
                 }
             }
 
@@ -572,37 +629,37 @@
         }, 50);
     }
 
-    function dispararViradaQuantizada() {
+    function executarFillQuantizado(fillNum) {
         isFillArmed = false;
         isFillPlaying = true;
-        btnFill.classList.remove('armed');
-        btnFill.textContent = '🔥 TOCANDO VIRA...';
+        const btnTarget = fillNum === 1 ? btnFill1 : fillNum === 2 ? btnFill2 : btnFill3;
+        [btnFill1, btnFill2, btnFill3].forEach(b => b.classList.remove('armed'));
+        btnTarget.textContent = `🔥 FILL ${fillNum}...`;
 
         const ctx = getAudioContext();
         stemsData.forEach(s => { if (s.sourceNode) s.gainNode.gain.value = 0; });
 
-        if (fillSourceNode) { try { fillSourceNode.stop(); } catch(e){} }
+        if (activeFillSource) { try { activeFillSource.stop(); } catch(e){} }
         const source = ctx.createBufferSource();
-        source.buffer = fillBuffer;
-        source.connect(fillGainNode);
+        source.buffer = fillBuffers[fillNum];
+        source.connect(fillGainNodes[fillNum]);
         source.start(0);
-        fillSourceNode = source;
+        activeFillSource = source;
 
         source.onended = () => {
             isFillPlaying = false;
-            btnFill.textContent = '🪘 VIRA / FILL';
+            btnTarget.textContent = `🪘 FILL ${fillNum}`;
             stemsData.forEach(s => { s.gainNode.gain.value = 1; });
         };
     }
 
-    // VIRA NO MODO INSTANTÂNEO: Dispara na hora e inicia um NOVO CICLO (Loop do zero) ao terminar
-    function dispararViradaInstantanea() {
+    function executarFillInstantaneo(fillNum) {
         isFillPlaying = true;
-        btnFill.textContent = '🔥 TOCANDO VIRA...';
+        const btnTarget = fillNum === 1 ? btnFill1 : fillNum === 2 ? btnFill2 : btnFill3;
+        btnTarget.textContent = `🔥 FILL ${fillNum}...`;
 
         const ctx = getAudioContext();
 
-        // 1. Para os loops principais instantaneamente
         stemsData.forEach(s => {
             if (s.sourceNode) {
                 try { s.sourceNode.stop(); } catch(e){}
@@ -610,22 +667,19 @@
             }
         });
 
-        // 2. Toca o Buffer do Vira
-        if (fillSourceNode) { try { fillSourceNode.stop(); } catch(e){} }
+        if (activeFillSource) { try { activeFillSource.stop(); } catch(e){} }
         const source = ctx.createBufferSource();
-        source.buffer = fillBuffer;
-        source.connect(fillGainNode);
+        source.buffer = fillBuffers[fillNum];
+        source.connect(fillGainNodes[fillNum]);
         source.start(0);
-        fillSourceNode = source;
+        activeFillSource = source;
 
-        // 3. Ao terminar o vira, reinicia o loop principal do ZERO (novo ciclo)
         source.onended = () => {
             isFillPlaying = false;
-            btnFill.textContent = '🪘 VIRA / FILL';
+            btnTarget.textContent = `🪘 FILL ${fillNum}`;
 
             if (!isPlaying) return;
 
-            // Reseta o tempo de início para o exato momento atual, fazendo o loop começar do 0.0s (novo ciclo)
             startTime = ctx.currentTime;
             currentLoopCount++;
             loopCounter.textContent = `Loop: ${currentLoopCount}`;
@@ -633,9 +687,9 @@
             stemsData.forEach(stem => {
                 const src = ctx.createBufferSource();
                 src.buffer = stem.buffer;
-                src.loop = true;
+                src.loop = isLoopEnabled;
                 src.connect(stem.gainNode);
-                src.start(0, 0); // Inicia do segundo 0 (Início do novo ciclo)
+                src.start(0, 0);
                 stem.sourceNode = src;
             });
         };
@@ -666,7 +720,9 @@
     function triggerAction(actionName) {
         switch (actionName) {
             case 'play': if (!btnPlay.disabled) btnPlay.click(); break;
-            case 'fill': if (!btnFill.disabled) btnFill.click(); break;
+            case 'fill1': if (!btnFill1.disabled) btnFill1.click(); break;
+            case 'fill2': if (!btnFill2.disabled) btnFill2.click(); break;
+            case 'fill3': if (!btnFill3.disabled) btnFill3.click(); break;
             case 'stop': if (!btnStop.disabled) btnStop.click(); break;
         }
     }
@@ -695,7 +751,7 @@
             case ' ':
             case 'enter': triggerAction('play'); break;
             case 'escape': triggerAction('stop'); break;
-            case 'v': triggerAction('fill'); break;
+            case 'v': triggerAction('fill1'); break;
         }
     });
 
