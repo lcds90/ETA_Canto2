@@ -684,9 +684,18 @@
                 const id = cols[0]?.replace(/"/g, '') || ('item-'+index);
                 
                 let extraTracks = [];
-                if (cols[7] && cols[7].replace(/"/g, '').trim().length > 5) extraTracks.push(cols[7].replace(/"/g, '').trim());
-                if (cols[8] && cols[8].replace(/"/g, '').trim().length > 5) extraTracks.push(cols[8].replace(/"/g, '').trim());
-                if (cols[9] && cols[9].replace(/"/g, '').trim().length > 5) extraTracks.push(cols[9].replace(/"/g, '').trim());
+                // Coluna H (índice 7) = Loop Principal (-loop)
+                if (cols[7] && cols[7].replace(/"/g, '').trim().length > 5) extraTracks.push({ name: 'Loop (Trk1)', url: cols[7].replace(/"/g, '').trim(), type: 'trk1' });
+                // Coluna I (índice 8) = Fill 1 (-fill1)
+                if (cols[8] && cols[8].replace(/"/g, '').trim().length > 5) extraTracks.push({ name: 'Fill 1', url: cols[8].replace(/"/g, '').trim(), type: 'fill1' });
+                // Coluna J (índice 9) = Fill 2 (-fill2)
+                if (cols[9] && cols[9].replace(/"/g, '').trim().length > 5) extraTracks.push({ name: 'Fill 2', url: cols[9].replace(/"/g, '').trim(), type: 'fill2' });
+                // Coluna K (índice 10) = Fill 3 (-fill3)
+                if (cols[10] && cols[10].replace(/"/g, '').trim().length > 5) extraTracks.push({ name: 'Fill 3', url: cols[10].replace(/"/g, '').trim(), type: 'fill3' });
+                // Coluna L (índice 11) = Finalização (-fim)
+                if (cols[11] && cols[11].replace(/"/g, '').trim().length > 5) extraTracks.push({ name: 'Fim (Stop)', url: cols[11].replace(/"/g, '').trim(), type: 'ending' });
+
+
 
                 dadosMap[id] = {
                     id: id, cantor: cols[1]?.replace(/"/g, '') || '',
