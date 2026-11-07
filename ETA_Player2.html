@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - Roberto +-+</title>
+    <title>Canto ETA - Roberto !!</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
@@ -266,12 +266,6 @@
         </div>
     </div>
 
-    <div id="float-ctrl" class="floating-controls">
-        <button class="btn-large btn-restart" onclick="restartMedia()">↺ Início</button>
-        <button id="btn-pause-float" class="btn-large btn-pause" onclick="togglePlayPauseMaster()">⏸ Pausar</button>
-        <button class="btn-large btn-stop" onclick="stopAll()">■ Stop</button>
-    </div>
-
     <div class="search-container">
         <input type="text" id="search-input" placeholder="🔍 Buscar música ou intérprete..." oninput="filtrarLista()">
         <button class="clear-search" id="btn-clear" onclick="limparBusca()">✕</button>
@@ -286,7 +280,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         let GID_ATUAL = urlParams.get('gid') || '1960210650';
         
-        const CACHE_NAME = 'canto-eta-media-v33';
+        const CACHE_NAME = 'canto-eta-media-v34';
         let modoGerenciamentoAtivo = false;
         let currentSemitones = 0;
         let tomOriginalExtraido = null;
@@ -655,7 +649,7 @@
             let response = await cache.match(url);
             if (!response) {
                 response = await fetch(url);
-                if (!response.ok) throw new Error('Falha ao buscar arquivo');
+                if (!response.ok) throw new Error('Falha ao buscar arquivo: ' + url);
                 await cache.put(url, response.clone());
             }
             const arrayBuffer = await response.arrayBuffer();
@@ -906,15 +900,15 @@
                 
                 let extraTracks = [];
                 // Coluna H (índice 7) -> Trk1 (Loop)
-                if (cols[7] && cols[7].replace(/"/g, '').trim().startsWith('http')) {
+                if (cols[7] && cols[7].replace(/"/g, '').trim().length > 5) {
                     extraTracks.push({ name: 'Trk1 (Loop)', url: cols[7].replace(/"/g, '').trim(), type: 'trk1' });
                 }
                 // Coluna I (índice 8) -> Trk2 (Vira / Fill)
-                if (cols[8] && cols[8].replace(/"/g, '').trim().startsWith('http')) {
+                if (cols[8] && cols[8].replace(/"/g, '').trim().length > 5) {
                     extraTracks.push({ name: 'Trk2 (Fill)', url: cols[8].replace(/"/g, '').trim(), type: 'trk2' });
                 }
                 // Coluna J (índice 9) -> Trk3 (Fim)
-                if (cols[9] && cols[9].replace(/"/g, '').trim().startsWith('http')) {
+                if (cols[9] && cols[9].replace(/"/g, '').trim().length > 5) {
                     extraTracks.push({ name: 'Trk3 (Fim)', url: cols[9].replace(/"/g, '').trim(), type: 'trk3' });
                 }
 
@@ -1046,10 +1040,14 @@
                     
                     for (let i = 0; i < parsedStems.length; i++) {
                         const sUrl = normalizarUrlMidia(parsedStems[i].url);
-                        const sBuffer = await carregarBufferAudio(sUrl);
-                        const sGain = ctx.createGain();
-                        sGain.connect(ctx.destination);
-                        stemsData.push({ name: parsedStems[i].name, buffer: sBuffer, gainNode: sGain, isMuted: false, type: parsedStems[i].type });
+                        try {
+                            const sBuffer = await carregarBufferAudio(sUrl);
+                            const sGain = ctx.createGain();
+                            sGain.connect(ctx.destination);
+                            stemsData.push({ name: parsedStems[i].name, buffer: sBuffer, gainNode: sGain, isMuted: false, type: parsedStems[i].type });
+                        } catch (errStem) {
+                            console.warn(`Aviso: Não foi possível carregar o stem ${parsedStems[i].name} (${sUrl}):`, errStem);
+                        }
                     }
 
                     if (stemsData.length > 0) {
@@ -1065,10 +1063,12 @@
 
                         nowPlaying.innerHTML = `Pronto (Loop): <b>${musica}</b><br><small>${cantor}</small>`;
                         atualizarBotoesPlayMaster("▶ Loop");
+                    } else {
+                        throw new Error("Nenhum arquivo de stem pôde ser carregado com sucesso.");
                     }
                 } catch(err) {
-                    console.error(err);
-                    alert("Erro ao carregar os buffers do multiplayer.");
+                    console.error("Erro no multiplayer:", err);
+                    alert("Erro ao carregar os buffers do multiplayer. Verifique se os links das colunas H, I ou J são públicos e acessíveis.");
                 }
                 return;
             }
