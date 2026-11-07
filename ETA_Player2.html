@@ -280,7 +280,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         let GID_ATUAL = urlParams.get('gid') || '1960210650';
         
-        const CACHE_NAME = 'canto-eta-media-v34';
+        const CACHE_NAME = 'canto-eta-media-v35';
         let modoGerenciamentoAtivo = false;
         let currentSemitones = 0;
         let tomOriginalExtraido = null;
@@ -648,8 +648,8 @@
             const cache = await caches.open(CACHE_NAME);
             let response = await cache.match(url);
             if (!response) {
-                response = await fetch(url);
-                if (!response.ok) throw new Error('Falha ao buscar arquivo: ' + url);
+                response = await fetch(url, { mode: 'cors' });
+                if (!response.ok) throw new Error('Falha ao buscar arquivo do GitHub: ' + url);
                 await cache.put(url, response.clone());
             }
             const arrayBuffer = await response.arrayBuffer();
@@ -1064,11 +1064,11 @@
                         nowPlaying.innerHTML = `Pronto (Loop): <b>${musica}</b><br><small>${cantor}</small>`;
                         atualizarBotoesPlayMaster("▶ Loop");
                     } else {
-                        throw new Error("Nenhum arquivo de stem pôde ser carregado com sucesso.");
+                        throw new Error("Nenhum arquivo de stem pôde ser carregado do GitHub.");
                     }
                 } catch(err) {
                     console.error("Erro no multiplayer:", err);
-                    alert("Erro ao carregar os buffers do multiplayer. Verifique se os links das colunas H, I ou J são públicos e acessíveis.");
+                    alert("Erro ao carregar os buffers do multiplayer do GitHub. Verifique se os caminhos dos arquivos estão corretos.");
                 }
                 return;
             }
