@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA // Multi-Track Studio</title>
+    <title>Canto ETA - MultiTrack Studio</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -399,7 +399,7 @@
         return await ctx.decodeAudioData(arrayBuffer);
     }
 
-async function inicializarEstudio() {
+    async function inicializarEstudio() {
         loadConfigs();
         if (!stemsEncoded) {
             toastMessage.textContent = 'Nenhum stem fornecido.';
@@ -412,7 +412,6 @@ async function inicializarEstudio() {
             stemsContainer.innerHTML = '';
             stemsData = [];
 
-            // Zera os buffers antes de carregar
             fillBuffers = { 1: null, 2: null, 3: null };
             fillGainNodes = { 1: null, 2: null, 3: null };
             endingBuffer = null;
@@ -431,11 +430,11 @@ async function inicializarEstudio() {
 
                 if (!trackUrl || trackUrl.length < 5) continue;
 
-                // Descobre inteligentemente o tipo pelo nome do arquivo na URL
                 const urlLower = trackUrl.toLowerCase();
                 let detectedType = '';
                 
-                if (urlLower.includes('-loop') || urlLower.includes('-trk1')) {
+                // Detecção robusta e blindada por nome/sufixo na URL
+                if (urlLower.includes('-loop') || urlLower.includes('loop') || urlLower.includes('-trk1')) {
                     detectedType = 'loop';
                     trackName = 'Loop Principal';
                 } else if (urlLower.includes('-fill1') || urlLower.includes('-trk2')) {
@@ -451,49 +450,52 @@ async function inicializarEstudio() {
                     detectedType = 'ending';
                     trackName = 'Fim (Stop)';
                 } else {
-                    // Fallback pela ordem caso não tenha sufixo claro
                     detectedType = i === 0 ? 'loop' : i === 1 ? 'fill1' : i === 2 ? 'fill2' : i === 3 ? 'fill3' : 'ending';
                 }
 
-                toastMessage.textContent = `Baixando ${trackName}...`;
-                const buffer = await carregarAudioBuffer(trackUrl);
-                const gainNode = ctx.createGain();
-                gainNode.gain.value = 1;
-                gainNode.connect(ctx.destination);
+                try {
+                    toastMessage.textContent = `Baixando ${trackName}...`;
+                    const buffer = await carregarAudioBuffer(trackUrl);
+                    const gainNode = ctx.createGain();
+                    gainNode.gain.value = 1;
+                    gainNode.connect(ctx.destination);
 
-                if (detectedType === 'loop') {
-                    stemsData.push({ name: trackName, buffer: buffer, gainNode: gainNode, sourceNode: null, type: 'trk1' });
+                    if (detectedType === 'loop') {
+                        stemsData.push({ name: trackName, buffer: buffer, gainNode: gainNode, sourceNode: null, type: 'trk1' });
 
-                    const row = document.createElement('div');
-                    row.className = 'stem-row';
-                    row.innerHTML = `<span class="stem-title">${trackName}</span>`;
-                    const toggleBtn = document.createElement('button');
-                    toggleBtn.className = 'btn-toggle on';
-                    toggleBtn.textContent = 'ON';
-                    toggleBtn.onclick = () => {
-                        if (gainNode.gain.value > 0) {
-                            gainNode.gain.value = 0; toggleBtn.textContent = 'OFF'; toggleBtn.className = 'btn-toggle off';
-                        } else {
-                            gainNode.gain.value = 1; toggleBtn.textContent = 'ON'; toggleBtn.className = 'btn-toggle on';
-                        }
-                    };
-                    row.appendChild(toggleBtn);
-                    stemsContainer.appendChild(row);
-                } else if (detectedType === 'fill1') {
-                    fillBuffers[1] = buffer;
-                    fillGainNodes[1] = gainNode;
-                    btnFill1.style.display = 'block';
-                } else if (detectedType === 'fill2') {
-                    fillBuffers[2] = buffer;
-                    fillGainNodes[2] = gainNode;
-                    btnFill2.style.display = 'block';
-                } else if (detectedType === 'fill3') {
-                    fillBuffers[3] = buffer;
-                    fillGainNodes[3] = gainNode;
-                    btnFill3.style.display = 'block';
-                } else if (detectedType === 'ending') {
-                    endingBuffer = buffer;
-                    endingGainNode = gainNode;
+                        const row = document.createElement('div');
+                        row.className = 'stem-row';
+                        row.innerHTML = `<span class="stem-title">${trackName}</span>`;
+                        const toggleBtn = document.createElement('button');
+                        toggleBtn.className = 'btn-toggle on';
+                        toggleBtn.textContent = 'ON';
+                        toggleBtn.onclick = () => {
+                            if (gainNode.gain.value > 0) {
+                                gainNode.gain.value = 0; toggleBtn.textContent = 'OFF'; toggleBtn.className = 'btn-toggle off';
+                            } else {
+                                gainNode.gain.value = 1; toggleBtn.textContent = 'ON'; toggleBtn.className = 'btn-toggle on';
+                            }
+                        };
+                        row.appendChild(toggleBtn);
+                        stemsContainer.appendChild(row);
+                    } else if (detectedType === 'fill1') {
+                        fillBuffers[1] = buffer;
+                        fillGainNodes[1] = gainNode;
+                        btnFill1.style.display = 'block';
+                    } else if (detectedType === 'fill2') {
+                        fillBuffers[2] = buffer;
+                        fillGainNodes[2] = gainNode;
+                        btnFill2.style.display = 'block';
+                    } else if (detectedType === 'fill3') {
+                        fillBuffers[3] = buffer;
+                        fillGainNodes[3] = gainNode;
+                        btnFill3.style.display = 'block';
+                    } else if (detectedType === 'ending') {
+                        endingBuffer = buffer;
+                        endingGainNode = gainNode;
+                    }
+                } catch (trackErr) {
+                    console.warn(`Aviso: Falha ao carregar ${trackName} (${trackUrl}). O player continuará sem ele.`);
                 }
             }
 
@@ -563,9 +565,6 @@ async function inicializarEstudio() {
         stemsData.forEach(stem => {
             if (stem.sourceNode) { try { stem.sourceNode.stop(); } catch(e){} stem.sourceNode = null; }
         });
-        Object.values(fillBuffers).forEach((_, idx) => {
-            // para sources de fill se houver
-        });
         if (activeFillSource) { try { activeFillSource.stop(); } catch(e){} activeFillSource = null; }
         if (endingSourceNode) { try { endingSourceNode.stop(); } catch(e){} endingSourceNode = null; }
 
@@ -587,7 +586,6 @@ async function inicializarEstudio() {
 
     btnPlay.addEventListener('click', () => { if (!isPlaying) playAll(); else pauseAll(); });
 
-    // Funções de Disparo de Fills (1, 2 ou 3)
     function dispararFill(fillNum) {
         if (!isPlaying || !fillBuffers[fillNum] || isFillPlaying) return;
         activeFillIndex = fillNum;
