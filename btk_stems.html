@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - MultiTrack Studio</title>
+    <title>Canto ETA 🥁 MultiTrack Studio</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -626,10 +626,16 @@
             if (!isPlaying || masterDuration === 0) return;
             const ctx = getAudioContext();
             const totalElapsed = ctx.currentTime - startTime;
+
+            // Se for o FIM tocando e o tempo estourar a duração do endingBuffer, encerra
+            if (endingSourceNode && totalElapsed >= masterDuration) {
+                return; 
+            }
+
             const currentPosition = totalElapsed % masterDuration;
             const newLoopCount = Math.floor(totalElapsed / masterDuration) + 1;
 
-            if (newLoopCount !== currentLoopCount) {
+            if (!endingSourceNode && newLoopCount !== currentLoopCount) {
                 currentLoopCount = newLoopCount;
                 loopCounter.textContent = `Loop: ${currentLoopCount}`;
 
@@ -640,7 +646,7 @@
                 }
             }
 
-            const percent = (currentPosition / masterDuration) * 100;
+            const percent = Math.min(100, (currentPosition / masterDuration) * 100);
             progressBarFill.style.width = `${percent}%`;
 
             const remaining = Math.max(0, masterDuration - currentPosition);
@@ -717,6 +723,8 @@
         };
     }
 
+    let activeDuration = 0; // Nova variável para controlar a duração do áudio ativo (loop ou ending)
+
     function dispararFinalizacao() {
         isEndingArmed = false;
         btnStop.classList.remove('armed');
@@ -724,12 +732,19 @@
         const ctx = getAudioContext();
         stemsData.forEach(s => { if (s.sourceNode) { try { s.sourceNode.stop(); } catch(e){} } });
 
+        if (activeFillSource) { try { activeFillSource.stop(); } catch(e){} activeFillSource = null; }
         if (endingSourceNode) { try { endingSourceNode.stop(); } catch(e){} }
+
         const source = ctx.createBufferSource();
         source.buffer = endingBuffer;
         source.connect(endingGainNode);
         source.start(0);
         endingSourceNode = source;
+
+        // Reseta o timer para contar a partir de agora com base no tamanho exato do arquivo de FIM
+        startTime = ctx.currentTime;
+        masterDuration = endingBuffer.duration; // O timer agora foca na duração do Fim
+        loopCounter.textContent = `FIM`;
 
         source.onended = () => {
             stopAll();
