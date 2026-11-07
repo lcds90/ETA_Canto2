@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - Roberto !!</title>
+    <title>Canto ETA - Roberto +-+</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
@@ -16,7 +16,7 @@
             background-image: url('image_6.png'); 
             background-size: cover; background-position: center;
             background-repeat: no-repeat; background-attachment: fixed;
-            padding-bottom: 140px; 
+            padding-bottom: 120px; 
             transition: background 0.3s;
         }
         body.modo-gerenciamento {
@@ -46,12 +46,12 @@
             box-sizing: border-box;
         }
         .player-minimized { resize: none; min-height: 45px; padding-bottom: 10px; }        
-        .player-minimized #yt-player, .player-minimized .pitch-control-box, .player-minimized .progress-container, .player-minimized .master-controls-row, .player-minimized #loop-pedals-row, .player-minimized #midi-config-box { display: none !important; }        
+        .player-minimized #yt-player, .player-minimized .pitch-control-box, .player-minimized .progress-container, .player-minimized .master-controls-row, .player-minimized #loop-pedals-row { display: none !important; }        
         
-        #now-playing { font-weight: bold; margin-bottom: 8px; font-size: 0.9em; padding-right: 40px; word-break: break-all; }
+        #now-playing { font-weight: bold; margin-bottom: 8px; font-size: 1em; padding-right: 40px; }
         
         .master-controls-row {
-            display: flex; gap: 8px; margin-top: 10px; justify-content: center; align-items: center; flex-wrap: wrap;
+            display: flex; gap: 10px; margin-top: 10px; justify-content: center; align-items: center; flex-wrap: wrap;
         }
         .btn-master-action {
             background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3);
@@ -90,25 +90,6 @@
         }
         .btn-pitch:active { background: rgba(255, 255, 255, 0.3); }
         #pitch-val-display { font-family: monospace; font-size: 0.9em; font-weight: bold; color: #00bcd4; min-width: 35px; text-align: center; }
-
-        .midi-config-panel {
-            margin-top: 10px; background: rgba(20, 20, 35, 0.9);
-            border: 1px solid rgba(0, 188, 212, 0.4); border-radius: 10px;
-            overflow: hidden; text-align: left; font-size: 0.8rem;
-        }
-        .midi-config-header {
-            background: rgba(0, 188, 212, 0.2); padding: 8px 12px; color: #ff4; font-weight: bold;
-            display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;
-        }
-        .midi-config-content { padding: 10px; display: none; flex-direction: column; gap: 6px; }
-        .midi-config-content.open { display: flex; }
-        .midi-status-badge { background: rgba(76, 175, 80, 0.3); color: #81c784; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; }
-        
-        .midi-tester-box {
-            margin-top: 8px; background: rgba(40, 120, 60, 0.3); border: 1px dashed rgba(76, 175, 80, 0.6);
-            border-radius: 6px; padding: 6px 10px; font-family: monospace; font-size: 0.75rem; color: #a5d6a7;
-            text-align: center;
-        }
 
         #yt-player { 
             display: none; width: 100%; aspect-ratio: 16/9; border-radius: 10px; border: none; margin-top: 15px; 
@@ -224,12 +205,12 @@
         <button class="toggle-player" id="btn-toggle" onclick="togglePlayer()">▼</button>
         <div id="now-playing">Selecione uma faixa</div>
         
-        <!-- LINHA SUPERIOR: Botões Originais (Início, Play, Stop) com Pedal A e D -->
+        <!-- Controles Master (Áudio Normal / YouTube) -->
         <div id="audio-controls-group">
             <div class="master-controls-row">
                 <button class="btn-master-action" onclick="restartMedia()">↺ Início</button>
-                <button class="btn-master-action" id="btn-main-play" onclick="togglePlayPauseMaster()">▶ Play<span class="pedal-badge">A</span></button>
-                <button class="btn-master-action" onclick="stopAll()" style="color: #ff6b6b;">■ Stop<span class="pedal-badge">D</span></button>
+                <button class="btn-master-action" id="btn-main-play" onclick="togglePlayPauseMaster()">▶ Play</button>
+                <button class="btn-master-action" onclick="stopAll()" style="color: #ff6b6b;">■ Stop</button>
             </div>
 
             <div id="progress-panel" class="progress-container">
@@ -251,34 +232,12 @@
             </div>
         </div>
 
-        <!-- LINHA INFERIOR: Botões para Loops (Stems H, I, J) e Pedais B, C e D -->
+        <!-- Controles do Multiplayer (Colunas H, I, J) -->
         <div id="loop-pedals-row" style="display: none; margin-top: 10px; flex-direction: column; gap: 8px;">
             <div class="master-controls-row">
-                <button class="btn-master-action" id="btn-loop-play" onclick="togglePlayLoop()" style="background: #4caf50;">▶ Loop<span class="pedal-badge">B</span></button>
-                <button class="btn-master-action" onclick="dispararFillTrk2()" style="background: #e91e63;">🪘 Vira<span class="pedal-badge">C</span></button>
-                <button class="btn-master-action" onclick="dispararStopInteligente()" style="background: #f44336;">■ Stop<span class="pedal-badge">D</span></button>
-            </div>
-        </div>
-
-        <!-- Janela com Dropdown para Instruções do Pedal + Testador de Sinal -->
-        <div id="midi-config-box" class="midi-config-panel">
-            <div class="midi-config-header" onclick="toggleDropdownMidi()">
-                <span>🦶 Pedal M-Vave Chocolate Plus (Modo Keyboard B)</span>
-                <span style="display: flex; align-items: center; gap: 6px;">
-                    <span class="midi-status-badge">Ativo</span>
-                    <span id="dropdown-arrow">▼</span>
-                </span>
-            </div>
-            <div id="midi-dropdown-content" class="midi-config-content">
-                <div style="color: #bbb; line-height: 1.4;">
-                    • <b>Pedal A (PageDown):</b> Play / Pause Principal (Coluna E)<br>
-                    • <b>Pedal B (PageUp):</b> Play Loop / Trk1 (Coluna H)<br>
-                    • <b>Pedal C (Espaço):</b> Vira / Fill / Trk2 (Coluna I)<br>
-                    • <b>Pedal D (Enter):</b> Stop Inteligente / Trk3 (Coluna J)
-                </div>
-                <div id="midi-tester-display" class="midi-tester-box">
-                    ✅ AGUARDANDO COMANDO DO PEDAL...
-                </div>
+                <button class="btn-master-action" id="btn-loop-play" onclick="togglePlayLoop()" style="background: #4caf50;">▶ Loop</button>
+                <button class="btn-master-action" onclick="dispararFillTrk2()" style="background: #e91e63;">🪘 Vira</button>
+                <button class="btn-master-action" onclick="dispararStopInteligente()" style="background: #f44336;">■ Stop</button>
             </div>
         </div>
 
@@ -327,15 +286,24 @@
         const urlParams = new URLSearchParams(window.location.search);
         let GID_ATUAL = urlParams.get('gid') || '1960210650';
         
-        const CACHE_NAME = 'canto-eta-media-v32';
+        const CACHE_NAME = 'canto-eta-media-v33';
         let modoGerenciamentoAtivo = false;
         let currentSemitones = 0;
         let tomOriginalExtraido = null;
         let dadosGlobaisPlanilha = {};
-        let itemIdAtualCarregado = null;
 
-        // Dados pendentes para carregamento sob demanda no clique do Play
-        let itemPendenteCarregamento = null;
+        let audioElementNativo = null;
+        let tonePitchShift = null;
+        let tonePlayerNode = null;
+        let progressInterval = null;
+
+        // Variáveis do Multiplayer (Colunas H, I, J)
+        let stemsData = [];
+        let isMultiplayerActive = false;
+        let isPlayingMulti = false;
+        let startTimeMulti = 0;
+        let startOffsetMulti = 0;
+        let masterDurationMulti = 0;
 
         const NOTAS_CROMATICAS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
         const NOTAS_FLAT_MAP = { "Db":"C#", "Eb":"D#", "Gb":"F#", "Ab":"G#", "Bb":"A#" };
@@ -453,24 +421,6 @@
             return url;
         }
 
-        let audioCtx = null;
-        function getAudioContext() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            return audioCtx;
-        }
-
-        let audioElementNativo = null;
-        let tonePitchShift = null;
-        let tonePlayerNode = null;
-        let stemsData = [];
-        let isMultiplayerActive = false;
-        let isPlaying = false;
-        let startTime = 0;
-        let startOffset = 0;
-        let masterDuration = 0;
-        let progressInterval = null;
-
         function pararTonePlayer() {
             if (audioElementNativo) {
                 audioElementNativo.onerror = null;
@@ -497,7 +447,8 @@
                 clearInterval(progressInterval);
                 progressInterval = null;
             }
-            isPlaying = false;
+            isMultiplayerActive = false;
+            isPlayingMulti = false;
         }
 
         function stopAll() {
@@ -512,16 +463,11 @@
 
             if (yt) { yt.src = ""; yt.style.display = 'none'; }
             pararTonePlayer();
-            
             currentSemitones = 0;
             tomOriginalExtraido = null;
-            startOffset = 0;
-            masterDuration = 0;
-            itemIdAtualCarregado = null;
-            isMultiplayerActive = false;
+            startOffsetMulti = 0;
+            masterDurationMulti = 0;
             stemsData = [];
-            itemPendenteCarregamento = null;
-            
             atualizarDisplayPitch();
             
             const mainContainer = document.getElementById('main-player-container');
@@ -533,13 +479,6 @@
             const nowPlaying = document.getElementById('now-playing');
             if (nowPlaying) nowPlaying.innerText = "Selecione uma faixa";
             
-            const seekBar = document.getElementById('seek-bar');
-            const timeCurrent = document.getElementById('time-current');
-            const timeTotal = document.getElementById('time-total');
-            if (seekBar) seekBar.value = 0;
-            if (timeCurrent) timeCurrent.innerText = "00:00";
-            if (timeTotal) timeTotal.innerText = "00:00";
-            
             atualizarBotoesPlayMaster("▶ Play");
         }
 
@@ -548,42 +487,14 @@
             const btnLoop = document.getElementById('btn-loop-play');
             const btnFloat = document.getElementById('btn-pause-float');
             
-            if (btnMain) btnMain.innerText = texto === "⏸ Pausar" ? "⏸ Pausar" : "▶ Play";
+            if (btnMain) btnMain.innerText = texto;
             if (btnLoop) btnLoop.innerText = texto === "⏸ Pausar" ? "⏸ Pausar" : "▶ Loop";
             if (btnFloat) btnFloat.innerText = texto === "⏸ Pausar" ? "⏸ Pausar" : "▶ Play";
         }
 
         async function togglePlayPauseMaster() {
-            // Se houver item pendente de carregamento (clicado na lista mas ainda não carregado), carrega agora com gesto do usuário
-            if (itemPendenteCarregamento && itemIdAtualCarregado !== itemPendenteCarregamento.id) {
-                await inicializarEfetivamenteMidia(itemPendenteCarregamento);
-            }
-
             if (isMultiplayerActive) {
                 togglePlayLoop();
-                return;
-            }
-
-            if (tonePlayerNode) {
-                try {
-                    await Tone.start();
-                    if (Tone.context.state !== 'running') { await Tone.context.resume(); }
-                } catch(e) {}
-
-                if (isPlaying) {
-                    tonePlayerNode.stop();
-                    isPlaying = false;
-                    atualizarBotoesPlayMaster("▶ Play");
-                    if (progressInterval) clearInterval(progressInterval);
-                } else {
-                    const ctx = getAudioContext();
-                    const offset = (ctx.currentTime - startTime) % tonePlayerNode.buffer.duration;
-                    tonePlayerNode.start(0, offset);
-                    startTime = ctx.currentTime - offset;
-                    isPlaying = true;
-                    atualizarBotoesPlayMaster("⏸ Pausar");
-                    iniciarMonitoramentoTone();
-                }
                 return;
             }
 
@@ -608,61 +519,166 @@
             }
         }
 
+        // --- FUNÇÕES DO MULTIPLAYER (Colunas H, I, J) ---
         function togglePlayLoop() {
             if (stemsData.length === 0) return;
-            if (!isPlaying) {
+            if (!isPlayingMulti) {
                 playMultiplayer();
             } else {
                 pauseMultiplayer();
             }
         }
 
-        function restartMedia() {
-            startOffset = 0;
-            const seekBar = document.getElementById('seek-bar');
-            const timeCurrent = document.getElementById('time-current');
-            if (seekBar) seekBar.value = 0;
-            if (timeCurrent) timeCurrent.innerText = "00:00";
+        function playMultiplayer() {
+            if (stemsData.length === 0) return;
+            const ctx = Tone.context;
+            startTimeMulti = ctx.currentTime - startOffsetMulti;
 
-            if (isMultiplayerActive) {
-                playMultiplayer();
+            stemsData.forEach(stem => {
+                if (stem.type === 'trk2' || stem.type === 'trk3') return;
+                if (stem.sourceNode) { try { stem.sourceNode.stop(); } catch(e){} }
+                
+                const source = ctx.createBufferSource();
+                source.buffer = stem.buffer;
+                source.loop = true; // Trk1 (Coluna H) em loop contínuo
+                source.connect(stem.gainNode);
+                stem.gainNode.gain.value = 1;
+                source.start(0, startOffsetMulti % stem.buffer.duration);
+                stem.sourceNode = source;
+            });
+
+            isPlayingMulti = true;
+            atualizarBotoesPlayMaster("⏸ Pausar");
+            iniciarMonitoramentoMultiplayer();
+        }
+
+        function pauseMultiplayer() {
+            if (!isPlayingMulti) return;
+            const ctx = Tone.context;
+            startOffsetMulti = ctx.currentTime - startTimeMulti;
+            stemsData.forEach(stem => {
+                if (stem.sourceNode) { try { stem.sourceNode.stop(); } catch(e){} stem.sourceNode = null; }
+            });
+            isPlayingMulti = false;
+            atualizarBotoesPlayMaster("▶ Loop");
+            if (progressInterval) clearInterval(progressInterval);
+        }
+
+        // 🪘 VIRA (Coluna I): Mute no Loop (H), Play no Trk2 (I), depois Unmute no Loop (H)
+        function dispararFillTrk2() {
+            if (!isMultiplayerActive) return;
+            const stemTrk1 = stemsData.find(s => s.type === 'trk1');
+            const stemTrk2 = stemsData.find(s => s.type === 'trk2');
+            if (!stemTrk2) return;
+
+            const ctx = Tone.context;
+            
+            if (stemTrk1 && stemTrk1.gainNode) {
+                stemTrk1.gainNode.gain.value = 0; 
+            }
+
+            if (stemTrk2.sourceNode) { try { stemTrk2.sourceNode.stop(); } catch(e){} }
+
+            const source = ctx.createBufferSource();
+            source.buffer = stemTrk2.buffer;
+            source.loop = false;
+            source.connect(stemTrk2.gainNode);
+            stemTrk2.gainNode.gain.value = 1;
+            
+            source.onended = () => {
+                if (stemTrk1 && stemTrk1.gainNode) {
+                    stemTrk1.gainNode.gain.value = 1; 
+                }
+            };
+
+            source.start(0);
+            stemTrk2.sourceNode = source;
+        }
+
+        // ■ STOP (Coluna J / Trk3)
+        function dispararStopInteligente() {
+            if (!isPlayingMulti) {
+                stopAll();
                 return;
             }
-            if (tonePlayerNode) {
-                const ctx = getAudioContext();
-                tonePlayerNode.stop();
-                tonePlayerNode.start(0, 0);
-                startTime = ctx.currentTime;
-                isPlaying = true;
-                atualizarBotoesPlayMaster("⏸ Pausar");
-                iniciarMonitoramentoTone();
+
+            const stemTrk3 = stemsData.find(s => s.type === 'trk3');
+            
+            if (stemTrk3 && isMultiplayerActive && isPlayingMulti) {
+                const ctx = Tone.context;
+                stemsData.forEach(s => {
+                    if (s.sourceNode && s.type !== 'trk3') {
+                        try { s.sourceNode.stop(); } catch(e){}
+                        s.sourceNode = null;
+                    }
+                });
+
+                if (stemTrk3.sourceNode) { try { stemTrk3.sourceNode.stop(); } catch(e){} }
+
+                const source = ctx.createBufferSource();
+                source.buffer = stemTrk3.buffer;
+                source.loop = false;
+                source.connect(stemTrk3.gainNode);
+                stemTrk3.gainNode.gain.value = 1;
+
+                source.onended = () => {
+                    stopAll();
+                };
+
+                source.start(0);
+                stemTrk3.sourceNode = source;
+            } else {
+                stopAll();
+            }
+        }
+
+        function iniciarMonitoramentoMultiplayer() {
+            if (progressInterval) clearInterval(progressInterval);
+            progressInterval = setInterval(() => {
+                if (!isPlayingMulti || masterDurationMulti === 0) return;
+                const ctx = Tone.context;
+                const currentPos = (ctx.currentTime - startTimeMulti) % masterDurationMulti;
+
+                const seekBar = document.getElementById('seek-bar');
+                const timeCurrent = document.getElementById('time-current');
+                const timeTotal = document.getElementById('time-total');
+
+                if (seekBar) seekBar.value = (currentPos / masterDurationMulti) * 100;
+                if (timeCurrent) timeCurrent.innerText = formatarTempo(currentPos);
+                if (timeTotal) timeTotal.innerText = formatarTempo(masterDurationMulti);
+            }, 100);
+        }
+
+        async function carregarBufferAudio(url) {
+            const ctx = Tone.context;
+            const cache = await caches.open(CACHE_NAME);
+            let response = await cache.match(url);
+            if (!response) {
+                response = await fetch(url);
+                if (!response.ok) throw new Error('Falha ao buscar arquivo');
+                await cache.put(url, response.clone());
+            }
+            const arrayBuffer = await response.arrayBuffer();
+            return await ctx.decodeAudioData(arrayBuffer);
+        }
+
+        function restartMedia() {
+            if (isMultiplayerActive) {
+                startOffsetMulti = 0;
+                playMultiplayer();
                 return;
             }
             if (!audioElementNativo) return;
             audioElementNativo.currentTime = 0;
-            audioElementNativo.play().then(() => {
-                atualizarBotoesPlayMaster("⏸ Pausar");
-                iniciarMonitoramentoProgressoNativo();
-            }).catch(e => {
-                console.error("Erro ao reiniciar:", e);
-            });
+            audioElementNativo.play();
+            atualizarBotoesPlayMaster("⏸ Pausar");
+            iniciarMonitoramentoProgressoNativo();
         }
 
         function seekingAudio(valPorcentagem) {
-            if (isMultiplayerActive && masterDuration > 0) {
-                startOffset = (valPorcentagem / 100) * masterDuration;
-                if (isPlaying) playMultiplayer();
-                return;
-            }
-            if (tonePlayerNode && tonePlayerNode.buffer) {
-                const ctx = getAudioContext();
-                const duracao = tonePlayerNode.buffer.duration;
-                const novoTempo = (valPorcentagem / 100) * duracao;
-                tonePlayerNode.stop();
-                tonePlayerNode.start(0, novoTempo);
-                startTime = ctx.currentTime - novoTempo;
-                isPlaying = true;
-                atualizarBotoesPlayMaster("⏸ Pausar");
+            if (isMultiplayerActive && masterDurationMulti > 0) {
+                startOffsetMulti = (valPorcentagem / 100) * masterDurationMulti;
+                if (isPlayingMulti) playMultiplayer();
                 return;
             }
             if (!audioElementNativo || !audioElementNativo.duration) return;
@@ -697,15 +713,6 @@
             const isMin = container.classList.toggle('player-minimized');
             const btnToggle = document.getElementById('btn-toggle');
             if (btnToggle) btnToggle.innerText = isMin ? '▼' : '✕';
-        }
-
-        function toggleDropdownMidi() {
-            const content = document.getElementById('midi-dropdown-content');
-            const arrow = document.getElementById('dropdown-arrow');
-            if (content) {
-                const isOpen = content.classList.toggle('open');
-                if (arrow) arrow.innerText = isOpen ? '▲' : '▼';
-            }
         }
 
         function filtrarLista() {
@@ -758,7 +765,9 @@
                 const resposta = await fetch(`${WEB_APP_URL}?${query}`, { method: 'GET' });
                 const textoResposta = await resposta.text();
 
-                if (textoResposta.includes("Erro")) throw new Error(textoResposta);
+                if (textoResposta.includes("Erro")) {
+                    throw new Error(textoResposta);
+                }
 
                 elementoLi.style.opacity = "1";
                 carregar(); 
@@ -787,7 +796,9 @@
                 const resposta = await fetch(`${WEB_APP_URL}?${query}`, { method: 'GET' });
                 const textoResposta = await resposta.text();
 
-                if (textoResposta.includes("Erro")) throw new Error(textoResposta);
+                if (textoResposta.includes("Erro")) {
+                    throw new Error(textoResposta);
+                }
 
                 elementoLi.remove();
                 salvarEstadoLocal();
@@ -835,6 +846,38 @@
             }
         }
 
+        async function baixarMidiasDoDia() {
+            const botoes = document.querySelectorAll('#playlist-sortable .btn-cache:not(.cached)');
+            if (botoes.length === 0) return alert("Todas as mídias já estão baixadas!");
+            if (confirm(`Deseja baixar todas as ${botoes.length} mídias do dia?`)) {
+                const cache = await caches.open(CACHE_NAME);
+                for (let btn of botoes) {
+                    const url = btn.dataset.url;
+                    if (!url) continue;
+                    btn.innerText = '⏳';
+                    try {
+                        const res = await fetch(url);
+                        if (res.ok) { await cache.put(url, res); btn.innerText = '🗑️'; btn.classList.add('cached'); }
+                        else { btn.innerText = '⬇️'; }
+                    } catch(e) { btn.innerText = '⬇️'; }
+                }
+                alert("Downloads concluídos!");
+            }
+        }
+
+        async function limparMidiasDoDia() {
+            const botoes = document.querySelectorAll('#playlist-sortable .btn-cache.cached');
+            if (botoes.length === 0) return alert("Não há mídias salvas em memória.");
+            if (confirm("Deseja apagar as mídias da memória local?")) {
+                const cache = await caches.open(CACHE_NAME);
+                for (let btn of botoes) {
+                    await cache.delete(btn.dataset.url);
+                    btn.innerText = '⬇️'; btn.classList.remove('cached');
+                }
+                alert("Removido com sucesso!");
+            }
+        }
+
         async function carregar() {
             const lista = document.getElementById('playlist-sortable');
             if (lista) lista.innerHTML = '<p style="text-align:center;">Carregando...</p>';
@@ -857,27 +900,28 @@
             if (!lista) return;
             const linhas = texto.split('\n').map(l => l.trim()).filter(l => l);
             let dadosMap = {};
-            
             linhas.slice(1).forEach((linha, index) => {
                 const cols = inlineSplitCSV(linha);
-                const id = cols[1]?.replace(/"/g, '') || ('item-'+index);
+                const id = cols[0]?.replace(/"/g, '') || ('item-'+index);
                 
                 let extraTracks = [];
+                // Coluna H (índice 7) -> Trk1 (Loop)
                 if (cols[7] && cols[7].replace(/"/g, '').trim().startsWith('http')) {
                     extraTracks.push({ name: 'Trk1 (Loop)', url: cols[7].replace(/"/g, '').trim(), type: 'trk1' });
                 }
+                // Coluna I (índice 8) -> Trk2 (Vira / Fill)
                 if (cols[8] && cols[8].replace(/"/g, '').trim().startsWith('http')) {
                     extraTracks.push({ name: 'Trk2 (Fill)', url: cols[8].replace(/"/g, '').trim(), type: 'trk2' });
                 }
+                // Coluna J (índice 9) -> Trk3 (Fim)
                 if (cols[9] && cols[9].replace(/"/g, '').trim().startsWith('http')) {
                     extraTracks.push({ name: 'Trk3 (Fim)', url: cols[9].replace(/"/g, '').trim(), type: 'trk3' });
                 }
 
                 dadosMap[id] = {
-                    id: id, 
-                    cantor: cols[1]?.replace(/"/g, '') || '',
+                    id: id, cantor: cols[1]?.replace(/"/g, '') || '',
                     musica: cols[2]?.replace(/"/g, '') || '',
-                    media: cols[3]?.replace(/"/g, '').trim() || '',
+                    media: cols[3]?.replace(/"/g, '').trim() || '', // Coluna E (Principal)
                     tipo: (cols[4]?.replace(/"/g, '') || '').toLowerCase().trim(),
                     notes: cols[5]?.replace(/"/g, '') || '',
                     stems: extraTracks
@@ -938,7 +982,7 @@
                         <div class="action-buttons">
                             ${temMediaPrincipal && !ehYouTube && !ehGitHub ? `<button class="btn-github-upload" onclick="enviarItemParaGithub(this.closest('li'))" title="Enviar para o GitHub (Partitura)">🎼</button>` : ''}
                             ${temMediaPrincipal && !ehYouTube ? `<button class="btn-cache" data-url="${urlFinal}" onclick="toggleCache('${urlFinal}', this)">⬇️</button>` : ''}
-                            ${temMidiaValida ? `<button class="btn-play" onclick="prepararItem('${item.id}', '${item.tipo}', '${item.media.replace(/'/g, "\\'")}','${item.cantor.replace(/'/g, "\\'")}','${item.musica.replace(/'/g, "\\'")}','${stemsStringEncoded}', this.closest('li'))">▶</button>` : ''}
+                            ${temMidiaValida ? `<button class="btn-play" onclick="tocar('${item.media.replace(/'/g, "\\'")}', '${item.cantor.replace(/'/g, "\\'")}', '${item.musica.replace(/'/g, "\\'")}', '${stemsStringEncoded}', this.closest('li'))">▶</button>` : ''}
                             <button class="btn-delete-sheet" onclick="deletarItemPlanilha(this.closest('li'))" title="Excluir">🗑️</button>
                         </div>
                     `;
@@ -962,8 +1006,11 @@
             atualizarStatusBotoesCache();
         }
 
-        // APENAS PREPARA O PLAYER E GUARDA O ITEM PENDENTE (Evita bloqueio do navegador no clique da lista)
-        function prepararItem(idItem, tipo, media, cantor, musica, stemsEncoded, elementoLi) {
+        async function tocar(media, cantor, musica, stemsEncoded, elementoLi) {
+            const yt = document.getElementById('yt-player');
+            const audioControlsGroup = document.getElementById('audio-controls-group');
+            const loopPedalsRow = document.getElementById('loop-pedals-row');
+            
             const playerContainer = document.getElementById('main-player-container');
             if (playerContainer) playerContainer.classList.remove('player-minimized');
             
@@ -971,7 +1018,7 @@
             if (btnToggle) btnToggle.innerText = '✕';
             
             const nowPlaying = document.getElementById('now-playing');
-            if (nowPlaying) nowPlaying.innerHTML = `Pronto: <b>${musica}</b><br><small>${cantor} (Clique em Play)</small>`;
+            if (nowPlaying) nowPlaying.innerHTML = `Carregando: <b>${musica}</b><br><small>${cantor}</small>`;
             
             const floatCtrl = document.getElementById('float-ctrl');
             if (floatCtrl) floatCtrl.style.display = 'flex';
@@ -979,99 +1026,22 @@
             const notasItem = elementoLi?.querySelector('.notes-field')?.innerText || "";
             tomOriginalExtraido = extrairTomDaString(notasItem) || extrairTomDaString(musica) || extrairTomDaString(cantor);
 
+            if (yt) { yt.src = ""; yt.style.display = 'none'; }
             pararTonePlayer();
             currentSemitones = 0;
-            startOffset = 0;
             atualizarDisplayPitch();
-
-            const seekBar = document.getElementById('seek-bar');
-            const timeCurrent = document.getElementById('time-current');
-            if (seekBar) seekBar.value = 0;
-            if (timeCurrent) timeCurrent.innerText = "00:00";
-
-            itemPendenteCarregamento = { idItem, tipo, media, cantor, musica, stemsEncoded, elementoLi };
-            itemIdAtualCarregado = idItem;
-            atualizarBotoesPlayMaster("▶ Play");
-        }
-
-        // CARREGA EFETIVAMENTE A MÍDIA APENAS QUANDO O USUÁRIO APERTAR PLAY OU O PEDAL
-        async function inicializarEfetivamenteMidia(item) {
-            const { idItem, tipo, media, cantor, musica, stemsEncoded, elementoLi } = item;
-            const yt = document.getElementById('yt-player');
-            const audioControlsGroup = document.getElementById('audio-controls-group');
-            const loopPedalsRow = document.getElementById('loop-pedals-row');
-            const pitchPanel = document.getElementById('pitch-control-panel');
-
+            
             let parsedStems = [];
             try { parsedStems = JSON.parse(decodeURIComponent(stemsEncoded)); } catch(e){}
 
             const temMediaPrincipal = media && media.length > 5;
-            const ehYouTube = temMediaPrincipal && (media.includes('youtube.com') || media.includes('youtu.be') || (media.length === 11 && !media.includes('http')));
-            const ehGitHub = temMediaPrincipal && (media.includes('github.io') || media.includes('github.com'));
-            
-            if (temMediaPrincipal) {
-                isMultiplayerActive = false;
-                if (audioControlsGroup) audioControlsGroup.style.display = 'block';
-                if (loopPedalsRow) loopPedalsRow.style.display = 'none';
 
-                if (ehYouTube) {
-                    if (pitchPanel) pitchPanel.style.display = 'none';
-                    if (yt) {
-                        yt.style.display = 'block';
-                        let id = media.includes('v=') ? media.split('v=')[1].split('&')[0] : (media.includes('be/') ? media.split('be/')[1] : media);
-                        yt.src = `https://www.youtube.com/embed/${id}?autoplay=1`;
-                    }
-                    if (nowPlaying) nowPlaying.innerHTML = `Tocando: <b>${musica}</b><br><small>${cantor}</small>`;
-                } else if (ehGitHub) {
-                    if (pitchPanel) pitchPanel.style.display = 'flex';
-                    if (yt) { yt.src = ""; yt.style.display = 'none'; }
-                    try {
-                        const ctx = getAudioContext();
-                        if (ctx.state !== 'running') await ctx.resume();
-
-                        const urlAudio = normalizarUrlMidia(media);
-                        const buffer = await carregarBufferAudio(urlAudio);
-
-                        tonePitchShift = new Tone.PitchShift({ pitch: currentSemitones }).toDestination();
-                        tonePlayerNode = new Tone.Player({
-                            url: buffer,
-                            loop: false,
-                            onstop: () => { atualizarBotoesPlayMaster("▶ Play"); }
-                        }).connect(tonePitchShift);
-
-                        masterDuration = buffer.duration;
-                        const timeTotal = document.getElementById('time-total');
-                        if (timeTotal) timeTotal.innerText = formatarTempo(masterDuration);
-
-                        nowPlaying.innerHTML = `Pronto: <b>${musica}</b><br><small>${cantor}</small>`;
-                    } catch(e) {
-                        console.error("Erro Tone.js:", e);
-                        alert("Erro ao carregar o player de áudio do GitHub.");
-                    }
-                } else {
-                    if (pitchPanel) pitchPanel.style.display = 'flex';
-                    if (yt) { yt.src = ""; yt.style.display = 'none'; }
-
-                    const urlNativa = normalizarUrlMidia(media);
-                    audioElementNativo = new Audio(urlNativa);
-                    audioElementNativo.crossOrigin = "anonymous";
-                    audioElementNativo.preload = "auto";
-                    
-                    audioElementNativo.onloadedmetadata = () => {
-                        masterDuration = audioElementNativo.duration;
-                        const timeTotal = document.getElementById('time-total');
-                        if (timeTotal) timeTotal.innerText = formatarTempo(masterDuration);
-                    };
-
-                    nowPlaying.innerHTML = `Pronto: <b>${musica}</b><br><small>${cantor}</small>`;
-                    audioElementNativo.currentTime = 0;
-                }
-            } 
-            
+            // REGRA: SE NÃO HOUVER CONTEÚDO NA COLUNA E, ABRE O MULTIPLAYER (Colunas H, I, J)
             if (!temMediaPrincipal && parsedStems.length > 0) {
                 try {
-                    const ctx = getAudioContext();
-                    if (ctx.state !== 'running') await ctx.resume();
+                    await Tone.start();
+                    if (Tone.context.state !== 'running') { await Tone.context.resume(); }
+                    const ctx = Tone.context;
                     stemsData = [];
                     
                     for (let i = 0; i < parsedStems.length; i++) {
@@ -1083,156 +1053,85 @@
                     }
 
                     if (stemsData.length > 0) {
-                        masterDuration = stemsData[0].buffer.duration;
+                        masterDurationMulti = stemsData[0].buffer.duration;
                         isMultiplayerActive = true;
 
                         if (audioControlsGroup) audioControlsGroup.style.display = 'none';
                         if (loopPedalsRow) loopPedalsRow.style.display = 'block';
-                        if (pitchPanel) pitchPanel.style.display = 'none';
                         if (yt) { yt.src = ""; yt.style.display = 'none'; }
 
                         const timeTotal = document.getElementById('time-total');
-                        if (timeTotal) timeTotal.innerText = formatarTempo(masterDuration);
+                        if (timeTotal) timeTotal.innerText = formatarTempo(masterDurationMulti);
 
                         nowPlaying.innerHTML = `Pronto (Loop): <b>${musica}</b><br><small>${cantor}</small>`;
+                        atualizarBotoesPlayMaster("▶ Loop");
                     }
                 } catch(err) {
                     console.error(err);
-                    alert("Erro ao carregar os buffers de loop (Dropbox/CORS restrito). Verifique a URL do arquivo.");
+                    alert("Erro ao carregar os buffers do multiplayer.");
                 }
-            }
-            itemPendenteCarregamento = null;
-        }
-
-        async function carregarBufferAudio(url) {
-            const ctx = getAudioContext();
-            const cache = await caches.open(CACHE_NAME);
-            let response = await cache.match(url);
-            if (!response) {
-                response = await fetch(url);
-                if (!response.ok) throw new Error('Falha ao buscar arquivo');
-                await cache.put(url, response.clone());
-            }
-            const arrayBuffer = await response.arrayBuffer();
-            return await ctx.decodeAudioData(arrayBuffer);
-        }
-
-        function playMultiplayer() {
-            if (stemsData.length === 0) return;
-            const ctx = getAudioContext();
-            startTime = ctx.currentTime - startOffset;
-
-            stemsData.forEach(stem => {
-                if (stem.type === 'trk2' || stem.type === 'trk3') return;
-                if (stem.sourceNode) { try { stem.sourceNode.stop(); } catch(e){} }
-                
-                const source = ctx.createBufferSource();
-                source.buffer = stem.buffer;
-                source.loop = true; 
-                source.connect(stem.gainNode);
-                stem.gainNode.gain.value = 1;
-                source.start(0, startOffset % stem.buffer.duration);
-                stem.sourceNode = source;
-            });
-
-            isPlaying = true;
-            atualizarBotoesPlayMaster("⏸ Pausar");
-            iniciarMonitoramentoMultiplayer();
-        }
-
-        function pauseMultiplayer() {
-            if (!isPlaying) return;
-            const ctx = getAudioContext();
-            startOffset = ctx.currentTime - startTime;
-            stemsData.forEach(stem => {
-                if (stem.sourceNode) { try { stem.sourceNode.stop(); } catch(e){} stem.sourceNode = null; }
-            });
-            isPlaying = false;
-            atualizarBotoesPlayMaster("▶ Loop");
-            if (progressInterval) clearInterval(progressInterval);
-        }
-
-        function dispararFillTrk2() {
-            if (!isMultiplayerActive) return;
-            const stemTrk1 = stemsData.find(s => s.type === 'trk1');
-            const stemTrk2 = stemsData.find(s => s.type === 'trk2');
-            if (!stemTrk2) return;
-
-            const ctx = getAudioContext();
-            
-            if (stemTrk1 && stemTrk1.gainNode) {
-                stemTrk1.gainNode.gain.value = 0; 
-            }
-
-            if (stemTrk2.sourceNode) { try { stemTrk2.sourceNode.stop(); } catch(e){} }
-
-            const source = ctx.createBufferSource();
-            source.buffer = stemTrk2.buffer;
-            source.loop = false;
-            source.connect(stemTrk2.gainNode);
-            stemTrk2.gainNode.gain.value = 1;
-            
-            source.onended = () => {
-                if (stemTrk1 && stemTrk1.gainNode) {
-                    stemTrk1.gainNode.gain.value = 1; 
-                }
-            };
-
-            source.start(0);
-            stemTrk2.sourceNode = source;
-        }
-
-        function dispararStopInteligente() {
-            if (!isPlaying && !audioElementNativo && !tonePlayerNode) {
-                stopAll();
                 return;
             }
 
-            const stemTrk3 = stemsData.find(s => s.type === 'trk3');
+            // CASO CONTRÁRIO, EXECUTA O PLAYER NORMAL (ÁUDIO OU YOUTUBE)
+            if (audioControlsGroup) audioControlsGroup.style.display = 'block';
+            if (loopPedalsRow) loopPedalsRow.style.display = 'none';
+
+            const ehYouTube = media.includes('youtube.com') || media.includes('youtu.be') || (media.length === 11 && !media.includes('http'));
             
-            if (stemTrk3 && isMultiplayerActive && isPlaying) {
-                const ctx = getAudioContext();
-                stemsData.forEach(s => {
-                    if (s.sourceNode && s.type !== 'trk3') {
-                        try { s.sourceNode.stop(); } catch(e){}
-                        s.sourceNode = null;
-                    }
-                });
-
-                if (stemTrk3.sourceNode) { try { stemTrk3.sourceNode.stop(); } catch(e){} }
-
-                const source = ctx.createBufferSource();
-                source.buffer = stemTrk3.buffer;
-                source.loop = false;
-                source.connect(stemTrk3.gainNode);
-                stemTrk3.gainNode.gain.value = 1;
-
-                source.onended = () => {
-                    stopAll();
-                };
-
-                source.start(0);
-                stemTrk3.sourceNode = source;
+            if (ehYouTube) {
+                if (audioControlsGroup) audioControlsGroup.style.display = 'none';
+                if (yt) {
+                    yt.style.display = 'block';
+                    let id = media.includes('v=') ? media.split('v=')[1].split('&')[0] : (media.includes('be/') ? media.split('be/')[1] : media);
+                    yt.src = `https://www.youtube.com/embed/${id}?autoplay=1`;
+                }
+                if (nowPlaying) nowPlaying.innerHTML = `Tocando: <b>${musica}</b><br><small>${cantor}</small>`;
             } else {
-                stopAll();
+                let url = normalizarUrlMidia(media);
+                const ehDropbox = url.includes('dropbox.com');
+
+                try {
+                    audioElementNativo = new Audio();
+                    if (!ehDropbox) { audioElementNativo.crossOrigin = "anonymous"; }
+                    audioElementNativo.src = url;
+
+                    audioElementNativo.onloadedmetadata = async () => {
+                        const timeTotal = document.getElementById('time-total');
+                        const timeCurrent = document.getElementById('time-current');
+                        const seekBar = document.getElementById('seek-bar');
+                        
+                        if (timeTotal) timeTotal.innerText = formatarTempo(audioElementNativo.duration);
+                        if (timeCurrent) timeCurrent.innerText = "00:00";
+                        if (seekBar) seekBar.value = 0;
+
+                        if (!ehDropbox) {
+                            try {
+                                await Tone.start();
+                                if (Tone.context.state !== 'running') { await Tone.context.resume(); }
+                                tonePitchShift = new Tone.PitchShift({ pitch: currentSemitones }).toDestination();
+                                tonePlayerNode = Tone.context.createMediaElementSource(audioElementNativo);
+                                Tone.connect(tonePlayerNode, tonePitchShift);
+                            } catch(err) {
+                                console.error("Erro ao ligar ao Tone.js:", err);
+                            }
+                        }
+
+                        if (nowPlaying) nowPlaying.innerHTML = `Pronto: <b>${musica}</b><br><small>${cantor} (Clique em Play)</small>`;
+                        atualizarBotoesPlayMaster("▶ Play");
+                    };
+
+                    audioElementNativo.onerror = (e) => {
+                        console.error("Erro no carregamento:", e);
+                        alert(`Erro ao carregar o ficheiro de áudio:\n${url}`);
+                    };
+
+                    audioElementNativo.load();
+                } catch (err) {
+                    console.error("Erro:", err);
+                    alert("Erro ao iniciar o motor de áudio.");
+                }
             }
-        }
-
-        function iniciarMonitoramentoMultiplayer() {
-            if (progressInterval) clearInterval(progressInterval);
-            progressInterval = setInterval(() => {
-                if (!isPlaying || masterDuration === 0) return;
-                const ctx = getAudioContext();
-                const currentPos = (ctx.currentTime - startTime) % masterDuration;
-
-                const seekBar = document.getElementById('seek-bar');
-                const timeCurrent = document.getElementById('time-current');
-                const timeTotal = document.getElementById('time-total');
-
-                if (seekBar) seekBar.value = (currentPos / masterDuration) * 100;
-                if (timeCurrent) timeCurrent.innerText = formatarTempo(currentPos);
-                if (timeTotal) timeTotal.innerText = formatarTempo(masterDuration);
-            }, 100);
         }
 
         function iniciarMonitoramentoProgressoNativo() {
@@ -1255,35 +1154,6 @@
                 }
             }, 200);
         }
-
-        document.addEventListener('keydown', (e) => {
-            const key = e.key;
-            const code = e.code;
-            const keyLower = key.toLowerCase();
-
-            const tester = document.getElementById('midi-tester-display');
-            if (tester) {
-                tester.innerHTML = `🟢 SINAL RECEBIDO! Tecla: "${key}" (code: ${code})`;
-                tester.style.borderColor = '#4caf50';
-                setTimeout(() => {
-                    tester.style.borderColor = 'rgba(76, 175, 80, 0.6)';
-                }, 1500);
-            }
-
-            if (['pagedown', 'pageup', 'space', 'enter'].includes(keyLower) || ['PageDown', 'PageUp', 'Space', 'Enter'].includes(code)) {
-                e.preventDefault();
-            }
-
-            if (code === 'PageDown' || keyLower === 'pagedown') {
-                togglePlayPauseMaster();
-            } else if (code === 'PageUp' || keyLower === 'pageup') {
-                togglePlayLoop();
-            } else if (code === 'Space' || keyLower === ' ' || keyLower === 'v') {
-                dispararFillTrk2();
-            } else if (code === 'Enter' || keyLower === 'enter' || keyLower === 'f') {
-                dispararStopInteligente();
-            }
-        });
 
         window.addEventListener('DOMContentLoaded', carregar);
     </script>
