@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - Roberto !!</title>
+    <title>Canto ETA - Roberto novo</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
@@ -280,7 +280,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         let GID_ATUAL = urlParams.get('gid') || '1960210650';
         
-        const CACHE_NAME = 'canto-eta-media-v35';
+        const CACHE_NAME = 'canto-eta-media-v37';
         let modoGerenciamentoAtivo = false;
         let currentSemitones = 0;
         let tomOriginalExtraido = null;
@@ -643,13 +643,14 @@
             }, 100);
         }
 
+        // CARREGAMENTO DOS BUFFERS DO GITHUB VIA TONE.BUFFER (OU FETCH SEGURO)
         async function carregarBufferAudio(url) {
             const ctx = Tone.context;
             const cache = await caches.open(CACHE_NAME);
             let response = await cache.match(url);
             if (!response) {
-                response = await fetch(url, { mode: 'cors' });
-                if (!response.ok) throw new Error('Falha ao buscar arquivo do GitHub: ' + url);
+                response = await fetch(url);
+                if (!response.ok) throw new Error(`Falha ao buscar arquivo do GitHub (${response.status}): ${url}`);
                 await cache.put(url, response.clone());
             }
             const arrayBuffer = await response.arrayBuffer();
@@ -1039,7 +1040,10 @@
                     stemsData = [];
                     
                     for (let i = 0; i < parsedStems.length; i++) {
-                        const sUrl = normalizarUrlMidia(parsedStems[i].url);
+                        const rawUrl = parsedStems[i].url;
+                        if (!rawUrl || rawUrl.length < 5) continue;
+                        
+                        const sUrl = normalizarUrlMidia(rawUrl);
                         try {
                             const sBuffer = await carregarBufferAudio(sUrl);
                             const sGain = ctx.createGain();
@@ -1068,7 +1072,7 @@
                     }
                 } catch(err) {
                     console.error("Erro no multiplayer:", err);
-                    alert("Erro ao carregar os buffers do multiplayer do GitHub. Verifique se os caminhos dos arquivos estão corretos.");
+                    alert("Erro ao carregar os buffers do multiplayer do GitHub. Verifique o console para mais detalhes.");
                 }
                 return;
             }
