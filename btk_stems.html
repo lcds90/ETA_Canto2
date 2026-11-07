@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA # Multi-Track</title>
+    <title>Canto ETA - Multi-Track Studio</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -106,7 +106,6 @@
             to { opacity: 0.75; transform: scale(0.98); }
         }
 
-        /* Caixa de Opção do Modo da Virada */
         .fill-mode-box {
             background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
             padding: 8px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;
@@ -132,7 +131,6 @@
 
         .toast { font-size: 0.8rem; text-align: center; color: #ff4; min-height: 18px; font-style: italic; }
 
-        /* Estilos da Aba de Pedal */
         .pedal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .pedal-card {
             background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;
@@ -183,7 +181,6 @@
             </div>
         </div>
 
-        <!-- Seletor do Modo da Virada -->
         <div class="fill-mode-box">
             <span>🪘 Modo da Virada:</span>
             <select id="fillModeSelect" onchange="saveFillMode()">
@@ -300,7 +297,7 @@
     let currentLoopCount = 1;
     let syncInterval = null;
 
-    let fillMode = 'quantized'; // 'quantized' (Espera o ciclo) ou 'instant' (Instantâneo)
+    let fillMode = 'quantized';
 
     let pedalConfig = {
         'pageup': 'stop',
@@ -516,15 +513,12 @@
 
     btnPlay.addEventListener('click', () => { if (!isPlaying) playAll(); else pauseAll(); });
 
-    // AÇÃO DO BOTÃO VIRA / FILL
     btnFill.addEventListener('click', () => {
         if (!isPlaying || !fillBuffer || isFillPlaying) return;
 
         if (fillMode === 'instant') {
-            // MODO INSTANTÂNEO: Dispara imediatamente
             dispararViradaInstantanea();
         } else {
-            // MODO QUANTIZADO (Espera o ciclo)
             if (!isFillArmed) {
                 isFillArmed = true;
                 btnFill.classList.add('armed');
@@ -578,7 +572,6 @@
         }, 50);
     }
 
-    // VIRA NO MODO QUANTIZADO (Espera fechar o ciclo atual)
     function dispararViradaQuantizada() {
         isFillArmed = false;
         isFillPlaying = true;
@@ -602,18 +595,14 @@
         };
     }
 
-    // VIRA NO MODO INSTANTÂNEO (Executa na hora exata do comando, sem saltar o tempo da música)
+    // VIRA NO MODO INSTANTÂNEO: Dispara na hora e inicia um NOVO CICLO (Loop do zero) ao terminar
     function dispararViradaInstantanea() {
         isFillPlaying = true;
         btnFill.textContent = '🔥 TOCANDO VIRA...';
 
         const ctx = getAudioContext();
-        
-        // 1. Calcula exatamente em qual segundo do loop a música estava
-        const totalElapsed = ctx.currentTime - startTime;
-        const currentPosition = totalElapsed % masterDuration;
 
-        // 2. Para os loops principais instantaneamente
+        // 1. Para os loops principais instantaneamente
         stemsData.forEach(s => {
             if (s.sourceNode) {
                 try { s.sourceNode.stop(); } catch(e){}
@@ -621,7 +610,7 @@
             }
         });
 
-        // 3. Toca o Buffer do Vira
+        // 2. Toca o Buffer do Vira
         if (fillSourceNode) { try { fillSourceNode.stop(); } catch(e){} }
         const source = ctx.createBufferSource();
         source.buffer = fillBuffer;
@@ -629,22 +618,24 @@
         source.start(0);
         fillSourceNode = source;
 
-        // 4. Assim que o vira termina, o loop principal retoma do ponto correspondente em perfeito sincronismo
+        // 3. Ao terminar o vira, reinicia o loop principal do ZERO (novo ciclo)
         source.onended = () => {
             isFillPlaying = false;
             btnFill.textContent = '🪘 VIRA / FILL';
 
-            if (!isPlaying) return; // Se o usuário deu stop geral durante o vira
+            if (!isPlaying) return;
 
-            // Avança o startTime proporcionalmente para que o loop continue exatamente no compasso correto
-            startTime = ctx.currentTime - currentPosition;
+            // Reseta o tempo de início para o exato momento atual, fazendo o loop começar do 0.0s (novo ciclo)
+            startTime = ctx.currentTime;
+            currentLoopCount++;
+            loopCounter.textContent = `Loop: ${currentLoopCount}`;
 
             stemsData.forEach(stem => {
                 const src = ctx.createBufferSource();
                 src.buffer = stem.buffer;
                 src.loop = true;
                 src.connect(stem.gainNode);
-                src.start(0, currentPosition % stem.buffer.duration);
+                src.start(0, 0); // Inicia do segundo 0 (Início do novo ciclo)
                 stem.sourceNode = src;
             });
         };
