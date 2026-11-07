@@ -212,35 +212,50 @@
         return await ctx.decodeAudioData(arrayBuffer);
     }
 
-    async function inicializarEstudio() {
+async function inicializarEstudio() {
         if (!stemsEncoded) {
             toastMessage.textContent = 'Nenhum stem fornecido.';
             return;
         }
 
         try {
-            const parsedStems = JSON.parse(decodeURIComponent(stemsEncoded));
+            const rawStems = JSON.parse(decodeURIComponent(stemsEncoded));
             const ctx = getAudioContext();
             stemsContainer.innerHTML = '';
             stemsData = [];
 
-            for (let i = 0; i < parsedStems.length; i++) {
-                const track = parsedStems[i];
-                if (!track.url || track.url.length < 5) continue;
+            // Mapeia os stems com base na ordem ou tipo recebido
+            // Coluna H = Índice 0 (Trk1 / Loop), Coluna I = Índice 1 (Trk2 / Fill), Coluna J = Índice 2 (Trk3 / Fim)
+            for (let i = 0; i < rawStems.length; i++) {
+                let trackUrl = '';
+                let trackType = '';
+                let trackName = '';
 
-                toastMessage.textContent = `Baixando ${track.name}...`;
-                const buffer = await carregarAudioBuffer(track.url);
+                // Compatibilidade com formato objeto ou string pura
+                if (typeof rawStems[i] === 'object' && rawStems[i] !== null) {
+                    trackUrl = rawStems[i].url;
+                    trackType = rawStems[i].type || (i === 0 ? 'trk1' : i === 1 ? 'trk2' : 'trk3');
+                    trackName = rawStems[i].name || (i === 0 ? 'Trk1 (Loop)' : i === 1 ? 'Trk2 (Fill)' : 'Trk3 (Fim)');
+                } else {
+                    trackUrl = rawStems[i];
+                    trackType = (i === 0 ? 'trk1' : i === 1 ? 'trk2' : 'trk3');
+                    trackName = (i === 0 ? 'Trk1 (Loop)' : i === 1 ? 'Trk2 (Fill)' : 'Trk3 (Fim)');
+                }
+
+                if (!trackUrl || trackUrl.length < 5) continue;
+
+                toastMessage.textContent = `Baixando ${trackName}...`;
+                const buffer = await carregarAudioBuffer(trackUrl);
                 const gainNode = ctx.createGain();
                 gainNode.gain.value = 1;
                 gainNode.connect(ctx.destination);
 
-                if (track.type === 'trk1') {
-                    stemsData.push({ name: track.name, buffer: buffer, gainNode: gainNode, sourceNode: null, isMuted: false, type: 'trk1' });
+                if (trackType === 'trk1' || (i === 0 && !stemsData.some(s => s.type === 'trk1'))) {
+                    stemsData.push({ name: trackName, buffer: buffer, gainNode: gainNode, sourceNode: null, isMuted: false, type: 'trk1' });
 
-                    // Cria botão ON/OFF para o stem principal
                     const row = document.createElement('div');
                     row.className = 'stem-row';
-                    row.innerHTML = `<span class="stem-title">${track.name}</span>`;
+                    row.innerHTML = `<span class="stem-title">${trackName}</span>`;
                     const toggleBtn = document.createElement('button');
                     toggleBtn.className = 'btn-toggle on';
                     toggleBtn.textContent = 'ON';
@@ -253,11 +268,11 @@
                     };
                     row.appendChild(toggleBtn);
                     stemsContainer.appendChild(row);
-                } else if (track.type === 'trk2') {
+                } else if (trackType === 'trk2' || i === 1) {
                     fillBuffer = buffer;
                     fillGainNode = gainNode;
                     btnFill.disabled = false;
-                } else if (track.type === 'trk3') {
+                } else if (trackType === 'trk3' || i === 2) {
                     endingBuffer = buffer;
                     endingGainNode = gainNode;
                     btnStop.disabled = false;
