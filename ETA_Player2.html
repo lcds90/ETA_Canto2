@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA - Roberto !A+B!</title>
+    <title>Canto ETA - Roberto !>!</title>
     <link rel="icon" href="data:,">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
@@ -46,7 +46,7 @@
             box-sizing: border-box;
         }
         .player-minimized { resize: none; min-height: 45px; padding-bottom: 10px; }        
-        .player-minimized #yt-player, .player-minimized .pitch-control-box, .player-minimized .progress-container, .player-minimized .master-controls-row, .player-minimized #loop-pedals-row { display: none !important; }        
+        .player-minimized #yt-player, .player-minimized .pitch-control-box, .player-minimized .progress-container, .player-minimized .master-controls-row { display: none !important; }        
         
         #now-playing { font-weight: bold; margin-bottom: 8px; font-size: 1em; padding-right: 40px; }
         
@@ -213,15 +213,6 @@
             </div>
         </div>
 
-        <!-- Controles do Multiplayer Nativo (Colunas H, I, J) -->
-        <div id="loop-pedals-row" style="display: none; margin-top: 10px; flex-direction: column; gap: 8px;">
-            <div class="master-controls-row">
-                <button class="btn-master-action" id="btn-loop-play" onclick="togglePlayLoop()" style="background: #4caf50;">▶ Loop</button>
-                <button class="btn-master-action" onclick="dispararFillTrk2()" style="background: #e91e63;">🪘 Vira</button>
-                <button class="btn-master-action" onclick="dispararStopInteligente()" style="background: #f44336;">■ Stop</button>
-            </div>
-        </div>
-
         <iframe id="yt-player" allow="autoplay"></iframe>
     </div>
 
@@ -261,7 +252,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         let GID_ATUAL = urlParams.get('gid') || '1960210650';
         
-        const CACHE_NAME = 'canto-eta-media-v42';
+        const CACHE_NAME = 'canto-eta-media-v43';
         let modoGerenciamentoAtivo = false;
         let currentSemitones = 0;
         let tomOriginalExtraido = null;
@@ -271,13 +262,6 @@
         let tonePitchShift = null;
         let tonePlayerNode = null;
         let progressInterval = null;
-
-        // Variáveis do Multiplayer Nativo com Duplo Buffer (Colunas H, I, J)
-        let activeAudioElements = [];
-        let isMultiplayerActive = false;
-        let isPlayingMulti = false;
-        let masterDurationMulti = 0;
-        let loopCheckInterval = null;
 
         const NOTAS_CROMATICAS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
         const NOTAS_FLAT_MAP = { "Db":"C#", "Eb":"D#", "Gb":"F#", "Ab":"G#", "Bb":"A#" };
@@ -411,37 +395,21 @@
                 try { tonePlayerNode.disconnect(); } catch(e){}
                 tonePlayerNode = null;
             }
-            activeAudioElements.forEach(item => {
-                if (item.audio) {
-                    item.audio.pause();
-                    item.audio.src = "";
-                }
-            });
-            activeAudioElements = [];
             if (progressInterval) {
                 clearInterval(progressInterval);
                 progressInterval = null;
             }
-            if (loopCheckInterval) {
-                clearInterval(loopCheckInterval);
-                loopCheckInterval = null;
-            }
-            isMultiplayerActive = false;
-            isPlayingMulti = false;
         }
 
         function stopAll() {
             const yt = document.getElementById('yt-player');
             const audioControlsGroup = document.getElementById('audio-controls-group');
-            const loopPedalsRow = document.getElementById('loop-pedals-row');
             if (audioControlsGroup) audioControlsGroup.style.display = 'block';
-            if (loopPedalsRow) loopPedalsRow.style.display = 'none';
 
             if (yt) { yt.src = ""; yt.style.display = 'none'; }
             pararTonePlayer();
             currentSemitones = 0;
             tomOriginalExtraido = null;
-            masterDurationMulti = 0;
             atualizarDisplayPitch();
             
             const mainContainer = document.getElementById('main-player-container');
@@ -458,18 +426,10 @@
 
         function atualizarBotoesPlayMaster(texto) {
             const btnMain = document.getElementById('btn-main-play');
-            const btnLoop = document.getElementById('btn-loop-play');
-            
             if (btnMain) btnMain.innerText = texto;
-            if (btnLoop) btnLoop.innerText = texto === "⏸ Pausar" ? "⏸ Pausar" : "▶ Loop";
         }
 
         async function togglePlayPauseMaster() {
-            if (isMultiplayerActive) {
-                togglePlayLoop();
-                return;
-            }
-
             if (!audioElementNativo) return;
             try {
                 await Tone.start();
@@ -491,149 +451,21 @@
             }
         }
 
-        // --- MULTIPLAYER NATIVO COM DUPLO BUFFER (LOOP PERFEITO SEM GAP) ---
-        function togglePlayLoop() {
-            if (activeAudioElements.length === 0) return;
-            if (!isPlayingMulti) {
-                playMultiplayerNativo();
-            } else {
-                pauseMultiplayerNativo();
-            }
-        }
-
-        function playMultiplayerNativo() {
-            const audioA = activeAudioElements.find(s => s.type === 'trk1_a')?.audio;
-            if (!audioA) return;
-
-            audioA.currentTime = 0;
-            audioA.play().then(() => {
-                isPlayingMulti = true;
-                atualizarBotoesPlayMaster("⏸ Pausar");
-                iniciarMonitoramentoMultiplayerPerfeito();
-            }).catch(err => {
-                console.error("Erro ao reproduzir multiplayer:", err);
-                alert("O navegador bloqueou a reprodução automática.");
-            });
-        }
-
-        function pauseMultiplayerNativo() {
-            activeAudioElements.forEach(item => {
-                if (item.audio) item.audio.pause();
-            });
-            isPlayingMulti = false;
-            atualizarBotoesPlayMaster("▶ Loop");
-            if (progressInterval) clearInterval(progressInterval);
-            if (loopCheckInterval) clearInterval(loopCheckInterval);
-        }
-
-        // 🪘 VIRA (Coluna I): Pausa o Loop e toca o Trk2
-        function dispararFillTrk2() {
-            if (!isMultiplayerActive) return;
-            const audioA = activeAudioElements.find(s => s.type === 'trk1_a')?.audio;
-            const audioB = activeAudioElements.find(s => s.type === 'trk1_b')?.audio;
-            const audioTrk2 = activeAudioElements.find(s => s.type === 'trk2')?.audio;
-            if (!audioTrk2) return;
-
-            if (audioA) audioA.pause();
-            if (audioB) audioB.pause();
-
-            audioTrk2.currentTime = 0;
-            audioTrk2.play().catch(e => console.error(e));
-
-            audioTrk2.onended = () => {
-                if (isPlayingMulti) {
-                    playMultiplayerNativo();
-                }
-            };
-        }
-
-        // ■ STOP (Coluna J / Trk3)
-        function dispararStopInteligente() {
-            const audioTrk3 = activeAudioElements.find(s => s.type === 'trk3')?.audio;
-            if (audioTrk3 && isMultiplayerActive && isPlayingMulti) {
-                activeAudioElements.forEach(item => {
-                    if (item.audio && item.type !== 'trk3') item.audio.pause();
-                });
-                audioTrk3.currentTime = 0;
-                audioTrk3.play().catch(e => console.error(e));
-                audioTrk3.onended = () => {
-                    stopAll();
-                };
-            } else {
-                stopAll();
-            }
-        }
-
-        function iniciarMonitoramentoMultiplayerPerfeito() {
-            if (progressInterval) clearInterval(progressInterval);
-            if (loopCheckInterval) clearInterval(loopCheckInterval);
-
-            const audioA = activeAudioElements.find(s => s.type === 'trk1_a')?.audio;
-            const audioB = activeAudioElements.find(s => s.type === 'trk1_b')?.audio;
-            if (!audioA || !audioB) return;
-
-            let activeTrack = audioA;
-            let standbyTrack = audioB;
-            let triggeredNext = false;
-
-            // Transição antecipada a cada 30ms para eliminar o atraso/silêncio do loop
-            loopCheckInterval = setInterval(() => {
-                if (!isPlayingMulti || masterDurationMulti === 0) return;
-                const timeLeft = masterDurationMulti - activeTrack.currentTime;
-
-                if (timeLeft <= 0.05 && !triggeredNext) {
-                    triggeredNext = true;
-                    standbyTrack.currentTime = 0;
-                    standbyTrack.play().catch(e => {});
-
-                    let temp = activeTrack;
-                    activeTrack = standbyTrack;
-                    standbyTrack = temp;
-
-                    setTimeout(() => { triggeredNext = false; }, 300);
-                }
-            }, 30);
-
-            progressInterval = setInterval(() => {
-                if (!isPlayingMulti || masterDurationMulti === 0) return;
-                const currentPos = activeTrack.currentTime;
-
-                const seekBar = document.getElementById('seek-bar');
-                const timeCurrent = document.getElementById('time-current');
-                const timeTotal = document.getElementById('time-total');
-
-                if (seekBar) seekBar.value = (currentPos / masterDurationMulti) * 100;
-                if (timeCurrent) timeCurrent.innerText = formatarTempo(currentPos);
-                if (timeTotal) timeTotal.innerText = formatarTempo(masterDurationMulti);
-            }, 100);
-        }
-
-        function seekingAudio(valPorcentagem) {
-            if (isMultiplayerActive && masterDurationMulti > 0) {
-                const novoTempo = (valPorcentagem / 100) * masterDurationMulti;
-                activeAudioElements.forEach(item => {
-                    if (item.audio) item.audio.currentTime = novoTempo;
-                });
-                return;
-            }
-            if (!audioElementNativo || !audioElementNativo.duration) return;
-            const duracaoTotal = audioElementNativo.duration;
-            const novoTempo = (valPorcentagem / 100) * duracaoTotal;
-            audioElementNativo.currentTime = novoTempo;
-        }
-
         function restartMedia() {
-            if (isMultiplayerActive) {
-                activeAudioElements.forEach(item => {
-                    if (item.audio) { item.audio.currentTime = 0; if(isPlayingMulti) item.audio.play(); }
-                });
-                return;
-            }
             if (!audioElementNativo) return;
             audioElementNativo.currentTime = 0;
             audioElementNativo.play();
             atualizarBotoesPlayMaster("⏸ Pausar");
             iniciarMonitoramentoProgressoNativo();
+        }
+
+        function seekingAudio(valPorcentagem) {
+            if (!audioElementNativo || !audioElementNativo.duration) return;
+            const duracaoTotal = audioElementNativo.duration;
+            const novoTempo = (valPorcentagem / 100) * duracaoTotal;
+            audioElementNativo.currentTime = novoTempo;
+            const timeCurrent = document.getElementById('time-current');
+            if (timeCurrent) timeCurrent.innerText = formatarTempo(novoTempo);
         }
 
         function alterarPitch(delta) {
@@ -781,60 +613,14 @@
             }
         }
 
-        async function toggleCacheMulti(stemsJsonEncoded, btnElement) {
-            try {
-                let stems = JSON.parse(decodeURIComponent(stemsJsonEncoded));
-                if (stems.length === 0) return;
-                
-                const cache = await caches.open(CACHE_NAME);
-                const primeiroUrl = normalizarUrlMidia(stems[0].url);
-                const jaEmCache = await cache.match(primeiroUrl);
-
-                if (jaEmCache) {
-                    for (let stem of stems) {
-                        let u = normalizarUrlMidia(stem.url);
-                        await cache.delete(u);
-                    }
-                    btnElement.innerText = '⬇️';
-                    btnElement.classList.remove('cached');
-                } else {
-                    btnElement.innerText = '⏳';
-                    for (let stem of stems) {
-                        let u = normalizarUrlMidia(stem.url);
-                        let res = await fetch(u);
-                        if (res.ok) { await cache.put(u, res); }
-                    }
-                    btnElement.innerText = '🗑️';
-                    btnElement.classList.add('cached');
-                }
-            } catch (error) {
-                console.error("Erro no cache múltiplo:", error);
-                btnElement.innerText = '⬇️';
-                alert("Não foi possível gerenciar o cache dos stems.");
-            }
-        }
-
         async function atualizarStatusBotoesCache() {
             const botoes = document.querySelectorAll('.btn-cache');
             const cache = await caches.open(CACHE_NAME);
             for (let btn of botoes) {
                 const url = btn.dataset.url;
-                const stemsEncoded = btn.dataset.stems;
-                
                 if (url && await cache.match(url)) {
                     btn.innerText = '🗑️';
                     btn.classList.add('cached');
-                } else if (stemsEncoded) {
-                    try {
-                        let stems = JSON.parse(decodeURIComponent(stemsEncoded));
-                        if (stems.length > 0) {
-                            let primeiroUrl = normalizarUrlMidia(stems[0].url);
-                            if (await cache.match(primeiroUrl)) {
-                                btn.innerText = '🗑️';
-                                btn.classList.add('cached');
-                            }
-                        }
-                    } catch(e){}
                 }
             }
         }
@@ -846,23 +632,12 @@
                 const cache = await caches.open(CACHE_NAME);
                 for (let btn of botoes) {
                     const url = btn.dataset.url;
-                    const stemsEncoded = btn.dataset.stems;
+                    if (!url) continue;
                     btn.innerText = '⏳';
-                    
                     try {
-                        if (url) {
-                            const res = await fetch(url);
-                            if (res.ok) { await cache.put(url, res); }
-                        } else if (stemsEncoded) {
-                            let stems = JSON.parse(decodeURIComponent(stemsEncoded));
-                            for (let stem of stems) {
-                                let u = normalizarUrlMidia(stem.url);
-                                let res = await fetch(u);
-                                if (res.ok) { await cache.put(u, res); }
-                            }
-                        }
-                        btn.innerText = '🗑️';
-                        btn.classList.add('cached');
+                        const res = await fetch(url);
+                        if (res.ok) { await cache.put(url, res); btn.innerText = '🗑️'; btn.classList.add('cached'); }
+                        else { btn.innerText = '⬇️'; }
                     } catch(e) { btn.innerText = '⬇️'; }
                 }
                 alert("Downloads concluídos!");
@@ -875,19 +650,8 @@
             if (confirm("Deseja apagar as mídias da memória local?")) {
                 const cache = await caches.open(CACHE_NAME);
                 for (let btn of botoes) {
-                    const url = btn.dataset.url;
-                    const stemsEncoded = btn.dataset.stems;
-                    
-                    if (url) {
-                        await cache.delete(url);
-                    } else if (stemsEncoded) {
-                        let stems = JSON.parse(decodeURIComponent(stemsEncoded));
-                        for (let stem of stems) {
-                            await cache.delete(normalizarUrlMidia(stem.url));
-                        }
-                    }
-                    btn.innerText = '⬇️'; 
-                    btn.classList.remove('cached');
+                    await cache.delete(btn.dataset.url);
+                    btn.innerText = '⬇️'; btn.classList.remove('cached');
                 }
                 alert("Removido com sucesso!");
             }
@@ -920,15 +684,9 @@
                 const id = cols[0]?.replace(/"/g, '') || ('item-'+index);
                 
                 let extraTracks = [];
-                if (cols[7] && cols[7].replace(/"/g, '').trim().length > 5) {
-                    extraTracks.push({ name: 'Trk1 (Loop)', url: cols[7].replace(/"/g, '').trim(), type: 'trk1' });
-                }
-                if (cols[8] && cols[8].replace(/"/g, '').trim().length > 5) {
-                    extraTracks.push({ name: 'Trk2 (Fill)', url: cols[8].replace(/"/g, '').trim(), type: 'trk2' });
-                }
-                if (cols[9] && cols[9].replace(/"/g, '').trim().length > 5) {
-                    extraTracks.push({ name: 'Trk3 (Fim)', url: cols[9].replace(/"/g, '').trim(), type: 'trk3' });
-                }
+                if (cols[7] && cols[7].replace(/"/g, '').trim().length > 5) extraTracks.push(cols[7].replace(/"/g, '').trim());
+                if (cols[8] && cols[8].replace(/"/g, '').trim().length > 5) extraTracks.push(cols[8].replace(/"/g, '').trim());
+                if (cols[9] && cols[9].replace(/"/g, '').trim().length > 5) extraTracks.push(cols[9].replace(/"/g, '').trim());
 
                 dadosMap[id] = {
                     id: id, cantor: cols[1]?.replace(/"/g, '') || '',
@@ -965,8 +723,7 @@
                 const temStems = item.stems && item.stems.length > 0;
                 const temMidiaValida = temMediaPrincipal || temStems;
                 
-                const primeiraMidiaValida = temMediaPrincipal ? item.media : (temStems ? item.stems[0].url : '');
-                const urlFinal = temMediaPrincipal ? normalizarUrlMidia(primeiraMidiaValida) : '';
+                const urlFinal = normalizarUrlMidia(item.media);
                 li.dataset.media = urlFinal;
 
                 if (item.tipo === 'separador') {
@@ -990,17 +747,10 @@
 
                     let stemsStringEncoded = encodeURIComponent(JSON.stringify(item.stems));
 
-                    let botaoCacheHTML = '';
-                    if (temMediaPrincipal && !ehYouTube) {
-                        botaoCacheHTML = `<button class="btn-cache" data-url="${urlFinal}" onclick="toggleCache('${urlFinal}', this)">⬇️</button>`;
-                    } else if (!temMediaPrincipal && temStems) {
-                        botaoCacheHTML = `<button class="btn-cache" data-stems="${stemsStringEncoded}" onclick="toggleCacheMulti('${stemsStringEncoded}', this)">⬇️</button>`;
-                    }
-
                     let botoesAcao = `
                         <div class="action-buttons">
                             ${temMediaPrincipal && !ehYouTube && !ehGitHub ? `<button class="btn-github-upload" onclick="enviarItemParaGithub(this.closest('li'))" title="Enviar para o GitHub (Partitura)">🎼</button>` : ''}
-                            ${botaoCacheHTML}
+                            ${temMediaPrincipal && !ehYouTube ? `<button class="btn-cache" data-url="${urlFinal}" onclick="toggleCache('${urlFinal}', this)">⬇️</button>` : ''}
                             ${temMidiaValida ? `<button class="btn-play" onclick="tocar('${item.media.replace(/'/g, "\\'")}', '${item.cantor.replace(/'/g, "\\'")}', '${item.musica.replace(/'/g, "\\'")}', '${stemsStringEncoded}', this.closest('li'))">▶</button>` : ''}
                             <button class="btn-delete-sheet" onclick="deletarItemPlanilha(this.closest('li'))" title="Excluir">🗑️</button>
                         </div>
@@ -1025,10 +775,22 @@
             atualizarStatusBotoesCache();
         }
 
-        async function tocar(media, cantor, musica, stemsEncoded, elementoLi) {
+        function tocar(media, cantor, musica, stemsEncoded, elementoLi) {
+            let parsedStems = [];
+            try { parsedStems = JSON.parse(decodeURIComponent(stemsEncoded)); } catch(e){}
+
+            const temMediaPrincipal = media && media.length > 5;
+
+            // REGRA: SE A COLUNA E ESTIVER VAZIA E HOUVER STEMS (MULTIPLAYER), ABRE A NOVA PÁGINA DEDICADA DO BTK
+            if (!temMediaPrincipal && parsedStems.length > 0) {
+                const urlMultilayer = `btk_stems.html?musica=${encodeURIComponent(musica)}&cantor=${encodeURIComponent(cantor)}&stems=${stemsEncoded}`;
+                window.location.href = urlMultilayer;
+                return;
+            }
+
+            // CASO CONTRÁRIO, EXECUTA O PLAYER PADRÃO (ÁUDIO OU YOUTUBE)
             const yt = document.getElementById('yt-player');
             const audioControlsGroup = document.getElementById('audio-controls-group');
-            const loopPedalsRow = document.getElementById('loop-pedals-row');
             
             const playerContainer = document.getElementById('main-player-container');
             if (playerContainer) playerContainer.classList.remove('player-minimized');
@@ -1046,72 +808,6 @@
             pararTonePlayer();
             currentSemitones = 0;
             atualizarDisplayPitch();
-            
-            let parsedStems = [];
-            try { parsedStems = JSON.parse(decodeURIComponent(stemsEncoded)); } catch(e){}
-
-            const temMediaPrincipal = media && media.length > 5;
-
-            // REGRA: SE COLUNA E ESTIVER VAZIA, USA O MULTIPLAYER COM DUPLO BUFFER (A/B)
-            if (!temMediaPrincipal && parsedStems.length > 0) {
-                try {
-                    activeAudioElements = [];
-                    let loadedCount = 0;
-
-                    for (let i = 0; i < parsedStems.length; i++) {
-                        const rawUrl = parsedStems[i].url;
-                        if (!rawUrl || rawUrl.length < 5) continue;
-
-                        const sUrl = normalizarUrlMidia(rawUrl);
-                        const type = parsedStems[i].type;
-
-                        if (type === 'trk1') {
-                            const audioA = new Audio();
-                            const audioB = new Audio();
-                            audioA.crossOrigin = audioB.crossOrigin = "anonymous";
-                            audioA.preload = audioB.preload = "auto";
-                            audioA.src = audioB.src = sUrl;
-
-                            activeAudioElements.push({ name: parsedStems[i].name + ' [A]', audio: audioA, type: 'trk1_a' });
-                            activeAudioElements.push({ name: parsedStems[i].name + ' [B]', audio: audioB, type: 'trk1_b' });
-
-                            audioA.onloadedmetadata = () => {
-                                loadedCount++;
-                                if (masterDurationMulti === 0) {
-                                    masterDurationMulti = audioA.duration;
-                                    const timeTotal = document.getElementById('time-total');
-                                    if (timeTotal) timeTotal.innerText = formatarTempo(masterDurationMulti);
-                                }
-                            };
-                        } else {
-                            const audioTag = new Audio();
-                            audioTag.crossOrigin = "anonymous";
-                            audioTag.preload = "auto";
-                            audioTag.src = sUrl;
-                            activeAudioElements.push({ name: parsedStems[i].name, audio: audioTag, type: type });
-                        }
-                    }
-
-                    if (activeAudioElements.length > 0) {
-                        isMultiplayerActive = true;
-                        if (audioControlsGroup) audioControlsGroup.style.display = 'none';
-                        if (loopPedalsRow) loopPedalsRow.style.display = 'block';
-
-                        nowPlaying.innerHTML = `Pronto (Loop Perfeito): <b>${musica}</b><br><small>${cantor}</small>`;
-                        atualizarBotoesPlayMaster("▶ Loop");
-                    } else {
-                        throw new Error("Nenhum arquivo de stem configurado.");
-                    }
-                } catch(err) {
-                    console.error("Erro no multiplayer:", err);
-                    alert("Erro ao carregar os áudios do GitHub.");
-                }
-                return;
-            }
-
-            // PLAYER NORMAL (Áudio único ou YouTube)
-            if (audioControlsGroup) audioControlsGroup.style.display = 'block';
-            if (loopPedalsRow) loopPedalsRow.style.display = 'none';
 
             const ehYouTube = media.includes('youtube.com') || media.includes('youtu.be') || (media.length === 11 && !media.includes('http'));
             
@@ -1124,6 +820,7 @@
                 }
                 if (nowPlaying) nowPlaying.innerHTML = `Tocando: <b>${musica}</b><br><small>${cantor}</small>`;
             } else {
+                if (audioControlsGroup) audioControlsGroup.style.display = 'block';
                 let url = normalizarUrlMidia(media);
                 const ehDropbox = url.includes('dropbox.com');
 
