@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Canto ETA 🎤🎸🥁 MultiTrack Studio</title>
+    <title>Canto ETA [🎤🎸🥁] MultiTrack</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -518,8 +518,6 @@
 
     function playAll() {
         if (stemsData.length === 0) return;
-        
-        // Ativa o Wake Lock para manter a tela do celular acesa no palco/ensaio
         solicitarWakeLock();
 
         const ctx = getAudioContext();
@@ -613,13 +611,29 @@
     btnFill2.addEventListener('click', () => dispararFill(2));
     btnFill3.addEventListener('click', () => dispararFill(3));
 
+    // BOTÃO STOP / FIM RESPEITANDO O MODO VIRA (INSTANT OU CICLO)
     btnStop.addEventListener('click', () => {
-        if (isPlaying && endingBuffer && !isEndingArmed) {
-            isEndingArmed = true;
-            btnStop.classList.add('armed');
-            btnStop.textContent = '⏳ FINALIZANDO...';
-        } else {
+        if (!isPlaying) return;
+
+        if (!endingBuffer) {
             stopAll();
+            return;
+        }
+
+        if (fillMode === 'instant') {
+            // Modo Instant: Dispara a finalização imediatamente cortando o loop
+            dispararFinalizacao();
+        } else {
+            // Modo Ciclo (Quantized): Arma a finalização para o próximo ciclo/compasso
+            if (!isEndingArmed) {
+                isEndingArmed = true;
+                btnStop.classList.add('armed');
+                btnStop.textContent = '⏳ FINALIZANDO...';
+            } else {
+                isEndingArmed = false;
+                btnStop.classList.remove('armed');
+                btnStop.textContent = '■ STOP / FIM';
+            }
         }
     });
 
